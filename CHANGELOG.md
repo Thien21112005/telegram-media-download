@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-10
+
+First release of the Chrome extension, published as a beta (pre-release) until it has been checked on live Telegram Web.
+
 ### Added
 - Chrome extension (Manifest V3), installed from a `.zip` with "Load unpacked"; replaces the userscript.
 - Side panel that lists photos and videos from the open chat as you scroll, in chat order and grouped by day, with filters, select day/all, shift-click ranges and a "You are here" marker.

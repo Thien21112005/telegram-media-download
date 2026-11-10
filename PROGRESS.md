@@ -1,4 +1,4 @@
-# Progress
+| 9 | 19/11/2026 | Test thực tế, phát hành v1.0.0 | 🟨 đã phát hành v0.9.0 (beta); v1.0.0 chờ test thật || 8 | 18/11/2026 | README, tài liệu, CI release | ✅ || 7 | 17/11/2026 | Kiểm định giao diện (impeccable) | ✅ reviewer: ship || 6 | 16/11/2026 | Tải hàng loạt + Options | ✅ (làm sớm, 10/11) || 5 | 15/11/2026 | Thiết kế + dựng Side Panel | ✅ (làm sớm, 10/11) || 4 | 14/11/2026 | Quét media trong chat | ✅ (làm sớm, 10/11) || 1 | 11/11/2026 | Nghiên cứu Telegram thật (R1–R4) | 🟨 R2, R3 xong; R1, R4 chờ chủ repo thử trên Telegram thật |# Progress
 
 Tiến độ chuyển Telegram Media Downloader từ userscript sang Chrome Extension.
 Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
@@ -59,3 +59,42 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
 - R3: đã kiểm chứng bằng test. Blob URL do trang tạo ra vẫn được lưu đúng vào thư mục con.
 
 **Vướng mắc:** R1, R4 cần thử trên Telegram thật (cần tài khoản đăng nhập).
+
+### Ngày 4 – Quét media trong chat
+- [x] `content/scanner.js`: IntersectionObserver ghi nhận ảnh/video khi lướt qua (WebK và WebA), có thumbnail, loại, thời lượng, ngày
+- [x] Lấy URL bản gốc bằng cách mở nhanh trình xem của Telegram cho từng mục rồi đóng lại (không đụng state nội bộ)
+- [x] Mục đã bị Telegram gỡ khỏi DOM thì báo "cuộn lại tới mục này"
+- [x] Test bằng fixture DOM giả lập WebK/WebA
+
+### Ngày 5–6 – Side panel, tải hàng loạt, cài đặt
+- [x] Quy trình `/impeccable`: PRODUCT.md, vòng hỏi chủ repo, chọn bố cục trên trang quyết định → chọn **Chat mirror**
+- [x] Side panel: theo thứ tự chat, chia ngày, lọc Ảnh/Video, chọn ngày/tất cả, Shift-click, vạch "Bạn đang ở đây", tiến độ trên từng ô
+- [x] Trạng thái trống: không phải Telegram, cần tải lại tab, chưa có media, bộ lọc rỗng
+- [x] Trang Options: ngôn ngữ, số luồng, thư mục, hỏi nơi lưu, ghi công tác giả gốc và người duy trì
+- [x] Test end-to-end với extension thật: tải 3 file vào `Telegram/<tên chat>/`
+
+### Ngày 7 – Kiểm định giao diện
+- [x] Finish reviewer (impeccable) vòng 1: **fix** (7 điểm) → sửa màu chữ phụ, dấu trạng thái, chuyển động, chữ bị cắt, ghi công, chụp đủ trạng thái
+- [x] Vòng 2: còn 3 điểm → sửa vị trí dấu, độ tương phản dấu lỗi ở chế độ tối, ghi DESIGN.md
+- [x] Vòng 3: **ship**
+- [x] `DESIGN.md` + `.impeccable/design.json` do documenter viết từ code thật
+- [x] Detector impeccable: không còn lỗi
+- [ ] Còn lệch (ghi nhận, chưa sửa): bảng tiến độ trong trang Telegram (core.js) vẫn dùng bảng màu cũ, animation lặp khi chưa biết dung lượng, và ký tự × làm icon
+
+### Ngày 8 – Tài liệu, CI
+- [x] README.md (EN) + README.vi.md: cài từ zip, cách dùng, cài đặt, giới hạn, FAQ, ghi công (Nestor Qin, Thien21112005, Claude), GPLv3
+- [x] docs/ARCHITECTURE.md, docs/CONTRIBUTING.md, CHANGELOG.md, mẫu issue mới
+- [x] `.github/workflows/release.yml`: tag `v*` → test → nén → GitHub Release (0.x là pre-release)
+- [x] Xoá `docs/greasyfork/`
+- [x] CI trên GitHub chạy xanh (kể cả test nạp extension thật)
+
+### Ngày 9 – Phát hành
+- [x] v0.9.0 (beta, pre-release) với file `telegram-media-download-v0.9.0.zip`
+- [ ] **Chủ repo test trên Telegram thật** rồi mới lên v1.0.0:
+  - [ ] Cài từ zip theo README trên Chrome (và Edge nếu có)
+  - [ ] `/k/`: mở side panel, cuộn một chat có ảnh/video → danh sách hiện, chia đúng ngày
+  - [ ] Chọn vài ảnh + video → Tải → file nằm trong `Downloads/Telegram/<tên chat>/`, mở được
+  - [ ] Kênh bị chặn lưu: nút tải trong trình xem, story, audio ghim
+  - [ ] `/a/`: lặp lại hai bước trên
+  - [ ] Video > 1 GB, album nhiều ảnh, chat rất dài (cuộn xa rồi tải)
+  - Nếu danh sách trống hoặc tải lỗi: mở DevTools ở tab Telegram, copy các dòng `[Tel Download]` và (nếu được) HTML của một bubble có ảnh để sửa selector trong `content/scanner.js`

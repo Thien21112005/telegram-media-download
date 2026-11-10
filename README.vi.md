@@ -16,6 +16,8 @@
 
 > Đây là công cụ không chính thức, không do Telegram làm ra, không liên kết và không được Telegram bảo trợ.
 
+> **Trạng thái: beta (0.9).** Test tự động đã chạy đạt trên trang Telegram giả lập; side panel chưa được kiểm tra trên mọi giao diện của Telegram Web. Rất mong nhận báo lỗi.
+
 ## Mục lục
 
 - [Tính năng](#tính-năng)

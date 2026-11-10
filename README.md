@@ -16,6 +16,8 @@ English · [Tiếng Việt](./README.vi.md)
 
 > This is an unofficial tool. It is not made by, affiliated with or endorsed by Telegram.
 
+> **Status: beta (0.9).** Automated tests pass against simulated Telegram pages; the side panel has not yet been checked on every Telegram Web layout. Reports are welcome.
+
 ## Contents
 
 - [Features](#features)
