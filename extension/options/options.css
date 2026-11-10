@@ -6,7 +6,7 @@
   --fg: #0f1419;
   --muted: #707579;
   --accent: #1f6fc4;
-  --success: #2e7d32;
+  --success: #2e8540;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #181818; --card: #212121; --line: #333333; --fg: #f1f1f1; --muted: #a8a8a8; --accent: #5aa7f2; --success: #6cc47b; }
