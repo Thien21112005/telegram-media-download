@@ -62,6 +62,8 @@ The extension is installed from a `.zip` file. It is not on the Chrome Web Store
 
 ## Use
 
+> Vietnamese step-by-step guide with troubleshooting: [docs/HUONG-DAN-SU-DUNG.md](docs/HUONG-DAN-SU-DUNG.md)
+
 Open [Telegram Web](https://web.telegram.org/k/). Both versions work; `/k/` is recommended because some features (voice messages, pinned audio) exist only there.
 
 ### Download many items from a chat

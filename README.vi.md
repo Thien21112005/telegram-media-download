@@ -62,6 +62,8 @@ Extension được cài từ file `.zip`, không có trên Chrome Web Store.
 
 ## Cách dùng
 
+> 📖 Hướng dẫn đầy đủ, có xử lý sự cố và mẹo dùng: **[docs/HUONG-DAN-SU-DUNG.md](docs/HUONG-DAN-SU-DUNG.md)**
+
 Mở [Telegram Web](https://web.telegram.org/k/). Cả hai phiên bản đều chạy được. Nên dùng `/k/` vì một số tính năng (tin nhắn thoại, audio ghim) chỉ có ở bản này.
 
 ### Tải nhiều media trong một chat
