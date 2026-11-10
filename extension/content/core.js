@@ -9,7 +9,72 @@
   if (globalThis.TelCore) return;
   const { UI_LANGUAGES, translate, matchLanguage } = globalThis.TelI18n;
   const LANGUAGE_STORAGE_KEY = "tel-media-downloader-language";
+
+  // In the extension, content/bridge.js (isolated world) marks the document and
+  // relays chrome.* APIs over DOM events. Without it, settings use page storage.
+  const hasBridge = () => document.documentElement.hasAttribute("data-tel-dl-bridge");
+  const extensionHandlers = new Map();
+  const pendingReplies = new Map();
+  let nextRequestId = 1;
+  const postToExtension = (message) => {
+    if (!hasBridge()) return false;
+    document.dispatchEvent(new CustomEvent("tel-dl:to-extension", { detail: JSON.stringify(message) }));
+    return true;
+  };
+  const requestExtension = (message, timeout = 3000) => new Promise((resolve) => {
+    if (!hasBridge()) {
+      resolve(null);
+      return;
+    }
+    const requestId = nextRequestId++;
+    const timer = setTimeout(() => {
+      pendingReplies.delete(requestId);
+      resolve(null);
+    }, timeout);
+    pendingReplies.set(requestId, (value) => {
+      clearTimeout(timer);
+      pendingReplies.delete(requestId);
+      resolve(value);
+    });
+    postToExtension({ ...message, requestId });
+  });
+  const onExtensionMessage = (type, handler) => extensionHandlers.set(type, handler);
+  document.addEventListener("tel-dl:to-page", (event) => {
+    let message;
+    try {
+      message = JSON.parse(event.detail);
+    } catch {
+      return;
+    }
+    if (message?.type === "reply") {
+      pendingReplies.get(message.requestId)?.(message.value);
+      return;
+    }
+    const handler = extensionHandlers.get(message?.type);
+    if (!handler) return;
+    Promise.resolve().then(() => handler(message)).then(
+      (value) => message.requestId && postToExtension({ type: "reply", requestId: message.requestId, value: value ?? null }),
+      (error) => {
+        console.error("[Tel Download]", error);
+        if (message.requestId) postToExtension({ type: "reply", requestId: message.requestId, value: null });
+      }
+    );
+  });
+
+  const DEFAULT_SETTINGS = globalThis.TelSettings.DEFAULTS;
+  let userSettings = { ...DEFAULT_SETTINGS };
+  let chatTitleProvider = () => "";
+  // Builds a relative download folder from the template; each segment is made safe for any OS.
+  const resolveFolder = () => {
+    const chat = String(chatTitleProvider() || "").trim() || "Telegram";
+    return String(userSettings.folderTemplate || "").replace(/\{chat\}/g, chat.replace(/[/\\]/g, "_"))
+      .split(/[/\\]+/)
+      .map((segment) => segment.replace(/[\x00-\x1f\x7f<>:"|?*]/g, "_").trim().replace(/[. ]+$/, "").slice(0, 80))
+      .filter((segment) => segment && segment !== "." && segment !== "..")
+      .join("/");
+  };
   const readLanguagePreference = () => {
+    if (hasBridge()) return "auto";
     try {
       const value = localStorage.getItem(LANGUAGE_STORAGE_KEY);
       return Object.hasOwn(UI_LANGUAGES, value) ? value : "auto";
@@ -220,8 +285,10 @@
     if (dot > 0 && allowed.includes(name.slice(dot + 1).toLowerCase())) return name;
     return (dot > 0 ? name.slice(0, dot) : name) + "." + allowed[0];
   };
-  const saveMediaBlob = (blob, fileName) => {
+  const saveMediaBlob = async (blob, fileName, folder) => {
     const url = URL.createObjectURL(blob);
+    // Ask the background worker to place this download in the folder before it starts.
+    if (folder && hasBridge()) await requestExtension({ type: "download:expect", url, folder });
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = fileName;
@@ -235,7 +302,7 @@
   const downloadTasks = new Map();
   const activeDownloads = new Map();
   const downloadQueue = [];
-  const MAX_CONCURRENT_DOWNLOADS = 2;
+  let maxConcurrentDownloads = DEFAULT_SETTINGS.concurrency;
   let runningDownloads = 0;
 
   const formatBytes = (bytes) => {
@@ -276,21 +343,39 @@
         <p class="tel-task-details"></p><p class="tel-task-error"></p>
         <div class="tel-task-actions"><button type="button" data-action="cancel"></button><button type="button" data-action="retry" hidden></button></div>`;
       card.querySelector('[data-action="dismiss"]').onclick = () => dismissTask(task);
-      card.querySelector('[data-action="cancel"]').onclick = () => {
-        if (task.finished || task.state === "saving") return;
-        task.controller.abort(new DOMException("Download cancelled", "AbortError"));
-        if (!task.running) finishTask(task, "cancelled");
-      };
-      card.querySelector('[data-action="retry"]').onclick = () => {
-        dismissTask(task);
-        downloadMedia(task.url, task.kind);
-      };
+      card.querySelector('[data-action="cancel"]').onclick = () => cancelTask(task);
+      card.querySelector('[data-action="retry"]').onclick = () => retryTask(task);
       list.prepend(card);
     }
     renderTask(task);
     return card;
   };
+  const cancelTask = (task) => {
+    if (task.finished || task.state === "saving") return;
+    task.controller.abort(new DOMException("Download cancelled", "AbortError"));
+    if (!task.running) finishTask(task, "cancelled");
+  };
+  const retryTask = (task) => {
+    dismissTask(task);
+    return downloadMedia(task.url, task.kind, { batch: task.batch, itemId: task.itemId, folder: task.folder });
+  };
+  // Side panel items follow their task; progress updates are throttled.
+  const notifyTask = (task) => {
+    if (!task.itemId || !hasBridge()) return;
+    const now = performance.now();
+    if (task.notifiedState === task.state && now - (task.notifiedAt || 0) < 250) return;
+    task.notifiedState = task.state;
+    task.notifiedAt = now;
+    postToExtension({
+      type: "task",
+      task: {
+        id: task.id, itemId: task.itemId, state: task.state, fileName: task.fileName,
+        received: task.received, total: task.total, error: formatDownloadError(task.error),
+      },
+    });
+  };
   const renderTask = (task) => {
+    notifyTask(task);
     const card = document.getElementById("tel-downloader-progress-" + task.id);
     if (!card) return;
     const label = t(task.state);
@@ -390,7 +475,7 @@
       task.state = "saving";
       renderTask(task);
       if (writable) await writable.close();
-      else saveMediaBlob(new Blob(parts, { type: mime }), task.fileName);
+      else await saveMediaBlob(new Blob(parts, { type: mime }), task.fileName, task.folder);
       finishTask(task, writable ? "completed" : "handedOff");
     } catch (error) {
       if (writable) {
@@ -404,7 +489,7 @@
     }
   };
   const pumpDownloads = () => {
-    while (runningDownloads < MAX_CONCURRENT_DOWNLOADS && downloadQueue.length) {
+    while (runningDownloads < maxConcurrentDownloads && downloadQueue.length) {
       const task = downloadQueue.shift();
       if (task.finished) continue;
       runningDownloads++;
@@ -416,7 +501,9 @@
       });
     }
   };
-  const downloadMedia = (url, kind) => {
+  // options.batch: started from the side panel; never opens a save dialog.
+  // options.itemId: side panel item to report progress to.
+  const downloadMedia = (url, kind, options = {}) => {
     if (typeof url !== "string" || !url) return Promise.resolve();
     const key = `${kind}:${url}`;
     const existing = activeDownloads.get(key);
@@ -436,6 +523,8 @@
       key, url, kind, fileName: getDownloadFileName(url, getMediaMetadata(url)?.mimeType, kind),
       state: "preparing", received: 0, total: null, controller: new AbortController(),
       startedAt: performance.now(), renderedAt: 0, finished: false,
+      batch: Boolean(options.batch), itemId: options.itemId || null,
+      folder: options.folder ?? resolveFolder(),
     };
     task.promise = new Promise(resolve => { task.resolve = resolve; });
     downloadTasks.set(task.id, task);
@@ -451,8 +540,8 @@
     };
     try {
       const pageWindow = typeof unsafeWindow === "undefined" ? window : unsafeWindow;
-      if (kind !== "image" && typeof pageWindow.showSaveFilePicker === "function" &&
-          pageWindow.self === pageWindow.top) {
+      if (kind !== "image" && !task.batch && userSettings.askWhereToSave &&
+          typeof pageWindow.showSaveFilePicker === "function" && pageWindow.self === pageWindow.top) {
         // Keep the picker inside the original click, before queueing or fetching.
         Promise.resolve(pageWindow.showSaveFilePicker({ suggestedName: task.fileName }))
           .then(enqueue, (error) => {
@@ -550,6 +639,10 @@
   };
   languageSelect.onchange = () => {
     languagePreference = Object.hasOwn(UI_LANGUAGES, languageSelect.value) ? languageSelect.value : "auto";
+    if (postToExtension({ type: "settings:set", patch: { language: languagePreference } })) {
+      refreshLanguage();
+      return;
+    }
     try {
       if (languagePreference === "auto") localStorage.removeItem(LANGUAGE_STORAGE_KEY);
       else localStorage.setItem(LANGUAGE_STORAGE_KEY, languagePreference);
@@ -562,7 +655,7 @@
     if (languagePreference === "auto") refreshLanguage();
   });
   window.addEventListener("storage", event => {
-    if (event.key === LANGUAGE_STORAGE_KEY || event.key === null) {
+    if (!hasBridge() && (event.key === LANGUAGE_STORAGE_KEY || event.key === null)) {
       languagePreference = readLanguagePreference();
       refreshLanguage();
     }
@@ -630,8 +723,26 @@
   document.head.appendChild(style);
   document.body.appendChild(panel);
   refreshLanguage();
+
+  const applySettings = (next) => {
+    if (!next || typeof next !== "object") return;
+    userSettings = globalThis.TelSettings.normalize(next, UI_LANGUAGES);
+    languagePreference = userSettings.language;
+    maxConcurrentDownloads = userSettings.concurrency;
+    refreshLanguage();
+    pumpDownloads();
+  };
+  onExtensionMessage("settings", (message) => applySettings(message.settings));
+  onExtensionMessage("task:cancel", ({ taskId }) => {
+    const task = downloadTasks.get(taskId);
+    if (task) cancelTask(task);
+  });
+  requestExtension({ type: "settings:get" }).then(applySettings);
+
   globalThis.TelCore = {
     logger, t, downloadMedia, getMediaSource, isUsableDownloadButton,
-    localizeDownloadButton, createDownloadButton,
+    localizeDownloadButton, createDownloadButton, onExtensionMessage, postToExtension,
+    setChatTitleProvider: (provider) => { chatTitleProvider = provider; },
+    resolveFolder,
   };
 })();
