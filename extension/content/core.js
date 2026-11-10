@@ -1,121 +1,14 @@
-// Telegram Media Downloader – content script.
+// SPDX-License-Identifier: GPL-3.0-only
 // Based on the Telegram Media Downloader userscript by Nestor Qin
 // (https://github.com/Neet-Nestor/Telegram-Media-Downloader).
 // Modified for the Chrome extension by Thien21112005.
-// SPDX-License-Identifier: GPL-3.0-only
 
+// Download engine, task panel and settings. Runs in the page's main world so
+// requests behave exactly as they did in the userscript.
 (function () {
-  // Keep translations in the userscript so installation needs no extra files.
-  const UI_LANGUAGES = {
-    en: "English", "zh-CN": "简体中文", "zh-TW": "繁體中文", ru: "Русский", my: "မြန်မာ",
-  };
-  const UI_MESSAGES = {
-    en: {
-      downloads: "Downloads", downloadsCount: "Downloads ({count})", mediaDownloads: "Media downloads",
-      download: "Download", loadingMedia: "Media is loading", hide: "Hide", show: "Show",
-      dismiss: "Dismiss download", progress: "Download progress", cancel: "Cancel", retry: "Retry",
-      settings: "Settings", language: "Interface language", automatic: "Browser language",
-      preparing: "Preparing", queued: "Queued", downloading: "Downloading", saving: "Saving",
-      completed: "Completed", handedOff: "Sent to browser", failed: "Failed", cancelled: "Cancelled",
-      rate: "{speed}/s", video: "video", audio: "audio", image: "image", unknownType: "an unknown file type",
-      errorHttp: "Download request failed (HTTP {status})",
-      errorMime: "Expected {kind}, received {mime}",
-      errorRangeMissing: "Missing or invalid Content-Range",
-      errorRangeInconsistent: "Inconsistent media range; download stopped to avoid a corrupt file",
-      errorRangeUnsupported: "Server stopped supporting partial downloads",
-      errorLength: "Invalid Content-Length", errorEmpty: "Empty media response",
-      errorTooLarge: "Media response exceeds the expected size",
-      errorIncomplete: "Incomplete media response; received byte count does not match",
-      errorTimeout: "No data received for 30 seconds. Please retry.",
-      errorUnexpected: "Download failed: {message}",
-    },
-    "zh-CN": {
-      downloads: "下载", downloadsCount: "下载（{count}）", mediaDownloads: "媒体下载",
-      download: "下载", loadingMedia: "媒体正在加载", hide: "收起", show: "展开",
-      dismiss: "移除下载卡片", progress: "下载进度", cancel: "取消", retry: "重试",
-      settings: "设置", language: "界面语言", automatic: "跟随浏览器",
-      preparing: "准备中", queued: "排队中", downloading: "下载中", saving: "保存中",
-      completed: "已完成", handedOff: "已交给浏览器", failed: "失败", cancelled: "已取消",
-      rate: "{speed}/秒", video: "视频", audio: "音频", image: "图片", unknownType: "未知文件类型",
-      errorHttp: "下载请求失败（HTTP {status}）",
-      errorMime: "预期为{kind}，实际收到 {mime}",
-      errorRangeMissing: "缺少 Content-Range，或其格式无效",
-      errorRangeInconsistent: "媒体数据范围不一致；已停止下载，避免保存损坏的文件",
-      errorRangeUnsupported: "服务器不再支持分段下载",
-      errorLength: "Content-Length 无效", errorEmpty: "媒体响应为空",
-      errorTooLarge: "收到的媒体数据超出预期大小",
-      errorIncomplete: "媒体数据不完整；收到的字节数与预期不符",
-      errorTimeout: "已连续 30 秒未收到数据，请重试。",
-      errorUnexpected: "下载失败：{message}",
-    },
-    "zh-TW": {
-      downloads: "下載", downloadsCount: "下載（{count}）", mediaDownloads: "媒體下載",
-      download: "下載", loadingMedia: "媒體正在載入", hide: "收合", show: "展開",
-      dismiss: "移除下載卡片", progress: "下載進度", cancel: "取消", retry: "重試",
-      settings: "設定", language: "介面語言", automatic: "跟隨瀏覽器",
-      preparing: "準備中", queued: "排隊中", downloading: "下載中", saving: "儲存中",
-      completed: "已完成", handedOff: "已交給瀏覽器", failed: "失敗", cancelled: "已取消",
-      rate: "{speed}/秒", video: "影片", audio: "音訊", image: "圖片", unknownType: "未知檔案類型",
-      errorHttp: "下載請求失敗（HTTP {status}）",
-      errorMime: "預期為{kind}，實際收到 {mime}",
-      errorRangeMissing: "缺少 Content-Range，或其格式無效",
-      errorRangeInconsistent: "媒體資料範圍不一致；已停止下載，避免儲存損壞的檔案",
-      errorRangeUnsupported: "伺服器不再支援分段下載",
-      errorLength: "Content-Length 無效", errorEmpty: "媒體回應為空",
-      errorTooLarge: "收到的媒體資料超出預期大小",
-      errorIncomplete: "媒體資料不完整；收到的位元組數與預期不符",
-      errorTimeout: "已連續 30 秒未收到資料，請重試。",
-      errorUnexpected: "下載失敗：{message}",
-    },
-    ru: {
-      downloads: "Загрузки", downloadsCount: "Загрузки ({count})", mediaDownloads: "Загрузка медиа",
-      download: "Скачать", loadingMedia: "Медиа загружается", hide: "Свернуть", show: "Развернуть",
-      dismiss: "Убрать карточку загрузки", progress: "Ход загрузки", cancel: "Отменить", retry: "Повторить",
-      settings: "Настройки", language: "Язык интерфейса", automatic: "Язык браузера",
-      preparing: "Подготовка", queued: "В очереди", downloading: "Загрузка", saving: "Сохранение",
-      completed: "Завершено", handedOff: "Передано браузеру", failed: "Ошибка", cancelled: "Отменено",
-      rate: "{speed}/с", video: "видео", audio: "аудио", image: "изображение", unknownType: "неизвестный тип файла",
-      errorHttp: "Ошибка запроса загрузки (HTTP {status})",
-      errorMime: "Ожидалось: {kind}. Получено: {mime}",
-      errorRangeMissing: "Заголовок Content-Range отсутствует или некорректен",
-      errorRangeInconsistent: "Диапазоны данных не совпадают; загрузка остановлена во избежание повреждения файла",
-      errorRangeUnsupported: "Сервер больше не поддерживает загрузку по частям",
-      errorLength: "Некорректный Content-Length", errorEmpty: "Получен пустой ответ с медиа",
-      errorTooLarge: "Размер полученных данных превышает ожидаемый",
-      errorIncomplete: "Данные неполные; число полученных байтов не совпадает с ожидаемым",
-      errorTimeout: "Нет данных в течение 30 секунд. Повторите попытку.",
-      errorUnexpected: "Не удалось скачать: {message}",
-    },
-    my: {
-      downloads: "ဒေါင်းလုဒ်များ", downloadsCount: "ဒေါင်းလုဒ်များ ({count})", mediaDownloads: "မီဒီယာဒေါင်းလုဒ်များ",
-      download: "ဒေါင်းလုဒ်လုပ်ရန်", loadingMedia: "မီဒီယာကို ဖွင့်နေသည်", hide: "ဖျောက်ရန်", show: "ပြရန်",
-      dismiss: "ဒေါင်းလုဒ်ကတ်ကို ဖယ်ရှားရန်", progress: "ဒေါင်းလုဒ်တိုးတက်မှု", cancel: "ပယ်ဖျက်ရန်", retry: "ထပ်စမ်းရန်",
-      settings: "ဆက်တင်များ", language: "မျက်နှာပြင်ဘာသာစကား", automatic: "ဘရောက်ဇာဘာသာစကား",
-      preparing: "ပြင်ဆင်နေသည်", queued: "စောင့်ဆိုင်းနေသည်", downloading: "ဒေါင်းလုဒ်လုပ်နေသည်", saving: "သိမ်းဆည်းနေသည်",
-      completed: "ပြီးစီးပြီ", handedOff: "ဘရောက်ဇာသို့ လွှဲပေးပြီး", failed: "မအောင်မြင်ပါ", cancelled: "ပယ်ဖျက်ပြီး",
-      rate: "{speed}/စက္ကန့်", video: "ဗီဒီယို", audio: "အသံ", image: "ပုံ", unknownType: "အမည်မသိ ဖိုင်အမျိုးအစား",
-      errorHttp: "ဒေါင်းလုဒ်တောင်းဆိုမှု မအောင်မြင်ပါ (HTTP {status})",
-      errorMime: "မျှော်လင့်ထားသည်မှာ {kind}၊ ရရှိသည်မှာ {mime}",
-      errorRangeMissing: "Content-Range မရှိပါ သို့မဟုတ် မမှန်ကန်ပါ",
-      errorRangeInconsistent: "မီဒီယာဒေတာအပိုင်းများ မကိုက်ညီပါ။ ဖိုင်မပျက်စီးစေရန် ဒေါင်းလုဒ်ကို ရပ်လိုက်သည်",
-      errorRangeUnsupported: "ဆာဗာသည် အပိုင်းလိုက်ဒေါင်းလုဒ်ကို မပံ့ပိုးတော့ပါ",
-      errorLength: "Content-Length မမှန်ကန်ပါ", errorEmpty: "မီဒီယာတုံ့ပြန်မှုတွင် ဒေတာမပါပါ",
-      errorTooLarge: "ရရှိသော မီဒီယာဒေတာသည် မျှော်လင့်ထားသည့် ပမာဏထက် ကျော်လွန်နေသည်",
-      errorIncomplete: "မီဒီယာဒေတာ မပြည့်စုံပါ။ ရရှိသော ဘိုက်အရေအတွက် မကိုက်ညီပါ",
-      errorTimeout: "စက္ကန့် ၃၀ ကြာ ဒေတာမရရှိပါ။ ထပ်စမ်းပါ။",
-      errorUnexpected: "ဒေါင်းလုဒ် မအောင်မြင်ပါ: {message}",
-    },
-  };
+  if (globalThis.TelCore) return;
+  const { UI_LANGUAGES, translate, matchLanguage } = globalThis.TelI18n;
   const LANGUAGE_STORAGE_KEY = "tel-media-downloader-language";
-  const matchLanguage = (tag) => {
-    const parts = String(tag || "").toLowerCase().replace(/_/g, "-").split("-");
-    if (parts[0] === "zh") {
-      if (parts.includes("hant")) return "zh-TW";
-      if (parts.includes("hans")) return "zh-CN";
-      return parts.some(part => ["tw", "hk", "mo"].includes(part)) ? "zh-TW" : "zh-CN";
-    }
-    return Object.hasOwn(UI_LANGUAGES, parts[0]) ? parts[0] : null;
-  };
   const readLanguagePreference = () => {
     try {
       const value = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -128,10 +21,6 @@
   const resolveLanguage = () => languagePreference !== "auto" ? languagePreference :
     (navigator.languages || [navigator.language]).map(matchLanguage).find(Boolean) || "en";
   let uiLanguage = resolveLanguage();
-  const translate = (language, key, params = {}) =>
-    (UI_MESSAGES[language]?.[key] ?? UI_MESSAGES.en[key] ?? key).replace(
-      /\{(\w+)\}/g, (placeholder, name) => Object.hasOwn(params, name) ? String(params[name]) : placeholder
-    );
   const t = (key, params) => translate(uiLanguage, key, params);
   let integerFormat = new Intl.NumberFormat(uiLanguage, { maximumFractionDigits: 0 });
   let decimalFormat = new Intl.NumberFormat(uiLanguage, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -172,19 +61,6 @@
       );
     },
   };
-  // WebK's icon font code points change between releases. Only learn the
-  // download glyph from native buttons in this page, never from our own buttons.
-  const WEB_K_DOWNLOAD_BUTTON_SELECTOR = [
-    "button.quality-download-options-button-menu",
-    "button.tgico-download",
-    'button[aria-label="Download"]',
-    'button[title="Download"]',
-  ].join(", ");
-  const getWebKDownloadButtons = (container) =>
-    Array.from(container.querySelectorAll(WEB_K_DOWNLOAD_BUTTON_SELECTOR)).filter(
-      (button) =>
-        !button.matches(".tel-download, ._tel_download_button_pinned_container")
-    );
   const isUsableDownloadButton = (button) => {
     if (button.disabled || button.getAttribute("aria-disabled") === "true" ||
         button.hidden || button.classList.contains("hide") || button.closest("[inert]")) {
@@ -193,27 +69,6 @@
     const style = getComputedStyle(button);
     return style.visibility !== "hidden" && style.visibility !== "collapse" &&
       button.getClientRects().length > 0;
-  };
-  let webKDownloadGlyph = "";
-  const createWebKDownloadIcon = (buttonIcon = false) =>
-    `<span class="tgico tel-download-icon${buttonIcon ? " button-icon" : ""}" aria-hidden="true">${
-      webKDownloadGlyph ||
-      '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle" aria-hidden="true" focusable="false"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></svg>'
-    }</span>`;
-  const refreshWebKDownloadIcon = () => {
-    for (const button of getWebKDownloadButtons(document)) {
-      const glyph = button.querySelector(":scope > .tgico")?.textContent.trim();
-      // Ignore labels or menu contents; the icon must be one private-use glyph.
-      if (!glyph || !/^[\uE000-\uF8FF]$/.test(glyph)) continue;
-      if (glyph !== webKDownloadGlyph) {
-        // Keep this in memory only: a new page load may use a different font.
-        webKDownloadGlyph = glyph;
-        document.querySelectorAll(".tel-download-icon").forEach((icon) => {
-          icon.textContent = glyph;
-        });
-      }
-      return;
-    }
   };
   const contentRangeRegex = /^bytes (\d+)-(\d+)\/(\d+)$/;
   const REFRESH_DELAY = 2000;
@@ -617,45 +472,6 @@
   const getMediaSource = (media) =>
     media?.getAttribute("src") ? media.src :
       media?.currentSrc || media?.querySelector("source")?.src;
-
-  const getPinnedMedia = () => {
-    const pinned = document.querySelector(".pinned-audio");
-    const mid = pinned?.getAttribute("data-mid");
-    if (!mid) return null;
-    const peer = pinned.getAttribute("data-peer-id");
-    const candidates = Array.from(document.querySelectorAll("audio-element")).filter(
-      (element) => element.closest(".bubble") && element.getAttribute("data-mid") === mid &&
-        (!peer || element.closest("[data-peer-id]")?.getAttribute("data-peer-id") === peer)
-    );
-    const element = candidates.length === 1 ? candidates[0] :
-      candidates.find((candidate) => candidate.audio && !candidate.audio.paused);
-    const url = getMediaSource(element?.audio);
-    return url ? { url, kind: element.audio.tagName === "AUDIO" ? "audio" : "video" } : null;
-  };
-
-  const downloadCurrentWebKMedia = () => {
-    // The toolbar can outlive its media node. Resolve both at click time.
-    const viewer = document.querySelector(".media-viewer-whole");
-    if (!viewer) return;
-    const buttons = viewer.querySelector(".media-viewer-topbar .media-viewer-buttons");
-    const nativeDownload = buttons && getWebKDownloadButtons(buttons).find(
-      (button) => isUsableDownloadButton(button) && !button.matches(
-        '.quality-download-options-button-menu, .btn-menu-toggle, [aria-haspopup="menu"], [aria-haspopup="true"]'
-      )
-    );
-    if (nativeDownload) {
-      nativeDownload.click();
-      return;
-    }
-    const media = viewer.querySelector(".media-viewer-movers .media-viewer-aspecter");
-    const videoUrl = getMediaSource(media?.querySelector("video"));
-    const imageUrl = getMediaSource(media?.querySelector("img.thumbnail"));
-    if (videoUrl) tel_download_video(videoUrl);
-    else if (imageUrl) tel_download_image(imageUrl);
-  };
-
-  logger.info("Initialized");
-
   const createDownloadButton = (className, iconHTML, onClick) => {
     const button = document.createElement("button");
     button.className = className;
@@ -665,219 +481,6 @@
     button.onclick = onClick;
     return button;
   };
-  const getWebADownloadButtons = (container) =>
-    Array.from(container.querySelectorAll("button")).filter((button) =>
-      !button.classList.contains("tel-download") &&
-      (button.querySelector(".icon-download") || button.title === "Download" ||
-        button.getAttribute("aria-label") === "Download") && isUsableDownloadButton(button)
-    );
-  const downloadCurrentWebAMedia = () => {
-    const media = document.querySelector("#MediaViewer .MediaViewerSlide--active");
-    const videoUrl = getMediaSource(media?.querySelector(".VideoPlayer video"));
-    const imageUrl = getMediaSource(media?.querySelector(".MediaViewerContent > div > img"));
-    if (videoUrl) tel_download_video(videoUrl);
-    else if (imageUrl) tel_download_image(imageUrl);
-  };
-
-  // WebA owns only media discovery and button placement.
-  const refreshWebA = () => {
-    const story = document.getElementById("StoryViewer");
-    if (story) {
-      const header = story.querySelector(".GrsJNw3y") || story.querySelector(".DropdownMenu")?.parentNode;
-      if (header && !header.querySelector(".tel-download") && !getWebADownloadButtons(header).length) {
-        header.prepend(createDownloadButton(
-          "Button TkphaPyQ tiny translucent-white round tel-download",
-          '<i class="icon icon-download" aria-hidden="true"></i>',
-          () => {
-            const current = document.getElementById("StoryViewer");
-            const videoUrl = getMediaSource(current?.querySelector("video"));
-            const images = current?.querySelectorAll("img.PVZ8TOWS");
-            const imageUrl = getMediaSource(images?.[images.length - 1]);
-            if (videoUrl) tel_download_video(videoUrl);
-            else if (imageUrl) tel_download_image(imageUrl);
-          }
-        ));
-      }
-    }
-    const media = document.querySelector("#MediaViewer .MediaViewerSlide--active");
-    const actions = document.querySelector("#MediaViewer .MediaViewerActions");
-    if (!media || !actions) return;
-    const video = media.querySelector(".VideoPlayer video");
-    const image = media.querySelector(".MediaViewerContent > div > img");
-    if (!getMediaSource(video) && !getMediaSource(image)) return;
-    const makeButton = () => createDownloadButton(
-      "Button smaller translucent-white round tel-download",
-      '<i class="icon icon-download" aria-hidden="true"></i>',
-      downloadCurrentWebAMedia
-    );
-    if (getWebADownloadButtons(actions).length) {
-      actions.querySelectorAll("button.tel-download").forEach((button) => button.remove());
-    } else if (!actions.querySelector("button.tel-download")) {
-      actions.prepend(makeButton());
-    }
-    const controls = media.querySelector(".VideoPlayerControls .buttons");
-    if (video && controls && !controls.querySelector("button.tel-download")) {
-      const spacer = controls.querySelector(".spacer");
-      if (spacer) spacer.after(makeButton());
-      else controls.appendChild(makeButton());
-    }
-  };
-
-  // WebK owns only media discovery and button placement.
-  const refreshWebK = () => {
-    refreshWebKDownloadIcon();
-
-    // Resolve the pinned media again on every click: its source may load after
-    // the pinned message changes, and message IDs can repeat across chats.
-    const pinnedAudio = document.querySelector(".pinned-audio");
-    const pinnedUtils = pinnedAudio?.querySelector(".pinned-container-wrapper-utils");
-    if (pinnedUtils) {
-      let button = pinnedUtils.querySelector("._tel_download_button_pinned_container");
-      if (!button) {
-        button = document.createElement("button");
-        button.className = "btn-icon tgico-download _tel_download_button_pinned_container";
-        button.innerHTML = createWebKDownloadIcon(true);
-        button.type = "button";
-        button.onclick = (event) => {
-          event.stopPropagation();
-          const media = getPinnedMedia();
-          if (!media) return;
-          if (media.kind === "audio") tel_download_audio(media.url);
-          else tel_download_video(media.url);
-        };
-        pinnedUtils.appendChild(button);
-      }
-      const disabled = !getPinnedMedia();
-      if (button.disabled !== disabled) button.disabled = disabled;
-      localizeDownloadButton(button, disabled);
-    }
-
-    // Stories
-    const storiesContainer = document.getElementById("stories-viewer");
-    if (storiesContainer) {
-      const createDownloadButton = () => {
-        const downloadButton = document.createElement("button");
-        downloadButton.className = "btn-icon rp tel-download";
-        downloadButton.innerHTML = `${createWebKDownloadIcon()}<div class="c-ripple"></div>`;
-        downloadButton.setAttribute("type", "button");
-        localizeDownloadButton(downloadButton);
-        downloadButton.onclick = () => {
-          // 1. Story with video
-          const video = storiesContainer.querySelector("video.media-video");
-          const videoSrc =
-            video?.src ||
-            video?.currentSrc ||
-            video?.querySelector("source")?.src;
-          if (videoSrc) {
-            tel_download_video(videoSrc);
-          } else {
-            // 2. Story with image
-            const imageSrc =
-              storiesContainer.querySelector("img.media-photo")?.src;
-            if (imageSrc) tel_download_image(imageSrc);
-          }
-        };
-        return downloadButton;
-      };
-
-      const storyHeader = storiesContainer.querySelector(
-        "[class*='_ViewerStoryHeaderRight']"
-      );
-      if (storyHeader && !storyHeader.querySelector(".tel-download")) {
-        storyHeader.prepend(createDownloadButton());
-      }
-
-      const storyFooter = storiesContainer.querySelector(
-        "[class*='_ViewerStoryFooterRight']"
-      );
-      if (storyFooter && !storyFooter.querySelector(".tel-download")) {
-        storyFooter.prepend(createDownloadButton());
-      }
-    }
-
-    // All media opened are located in .media-viewer-movers > .media-viewer-aspecter
-    const mediaContainer = document.querySelector(".media-viewer-whole");
-    if (!mediaContainer) return;
-    const mediaAspecter = mediaContainer.querySelector(
-      ".media-viewer-movers .media-viewer-aspecter"
-    );
-    const mediaButtons = mediaContainer.querySelector(
-      ".media-viewer-topbar .media-viewer-buttons"
-    );
-    if (!mediaAspecter || !mediaButtons) return;
-
-    // Restore only identified download controls. Other hidden actions may be
-    // unavailable for this media and should remain under Telegram's control.
-    for (const button of getWebKDownloadButtons(mediaButtons)) {
-      if (!button.disabled && button.getAttribute("aria-disabled") !== "true") {
-        button.classList.remove("hide");
-      }
-    }
-
-    // Recognize native downloads by their purpose, not their font code point.
-    const nativeDownloadButtons = getWebKDownloadButtons(mediaButtons).filter(isUsableDownloadButton);
-    if (nativeDownloadButtons.length > 0) {
-      mediaButtons.querySelectorAll("button.tel-download").forEach((button) => {
-        button.remove();
-      });
-    }
-    const hasDownloadButton =
-      nativeDownloadButtons.length > 0 ||
-      mediaButtons.querySelector("button.tel-download");
-
-    if (mediaAspecter.querySelector(".ckin__player")) {
-      // 1. Video player detected - Video and it has finished initial loading
-      // container > .ckin__player > video[src]
-
-      // add download button to videos
-      const controls = mediaAspecter.querySelector(
-        ".default__controls.ckin__controls"
-      );
-      if (controls && !controls.querySelector(".tel-download")) {
-        const brControls = controls.querySelector(
-          ".bottom-controls .right-controls"
-        );
-        const downloadButton = document.createElement("button");
-        downloadButton.className =
-          "btn-icon default__button tgico-download tel-download";
-        downloadButton.innerHTML = createWebKDownloadIcon();
-        downloadButton.setAttribute("type", "button");
-        localizeDownloadButton(downloadButton);
-        downloadButton.onclick = downloadCurrentWebKMedia;
-        brControls?.prepend(downloadButton);
-      }
-    } else if (
-      mediaAspecter.querySelector("video") &&
-      !hasDownloadButton
-    ) {
-      // 2. Video HTML element detected, could be either GIF or unloaded video
-      // container > video[src]
-      const downloadButton = document.createElement("button");
-      downloadButton.className = "btn-icon tgico-download tel-download";
-      downloadButton.innerHTML = createWebKDownloadIcon(true);
-      downloadButton.setAttribute("type", "button");
-      localizeDownloadButton(downloadButton);
-      downloadButton.onclick = downloadCurrentWebKMedia;
-      mediaButtons.prepend(downloadButton);
-    } else if (!hasDownloadButton) {
-      // 3. Image without download button detected
-      // container > img.thumbnail
-      if (
-        !mediaAspecter.querySelector("img.thumbnail") ||
-        !mediaAspecter.querySelector("img.thumbnail").src
-      ) {
-        return;
-      }
-      const downloadButton = document.createElement("button");
-      downloadButton.className = "btn-icon tgico-download tel-download";
-      downloadButton.innerHTML = createWebKDownloadIcon(true);
-      downloadButton.setAttribute("type", "button");
-      localizeDownloadButton(downloadButton);
-      downloadButton.onclick = downloadCurrentWebKMedia;
-      mediaButtons.prepend(downloadButton);
-    }
-  };
-
   // The task panel is independent of Telegram's viewer and survives media changes.
   const panel = document.createElement("section");
   panel.id = "tel-downloader-progress-bar-container";
@@ -1027,40 +630,8 @@
   document.head.appendChild(style);
   document.body.appendChild(panel);
   refreshLanguage();
-
-  const isWebK = location.hostname === "webk.telegram.org" || location.pathname.startsWith("/k/");
-  const isWebA = location.hostname === "webz.telegram.org" || location.pathname.startsWith("/a/");
-  const refreshApp = isWebK ? refreshWebK : isWebA ? refreshWebA : null;
-  if (refreshApp) {
-    const roots = isWebK
-      ? ".media-viewer-whole, #stories-viewer, .pinned-audio, audio-element"
-      : "#MediaViewer, #StoryViewer";
-    let pending;
-    const scheduleRefresh = () => {
-      if (pending) return;
-      pending = setTimeout(() => {
-        pending = null;
-        refreshApp();
-      }, 100);
-    };
-    const observer = new MutationObserver((records) => {
-      if (records.some((record) => {
-        const target = record.target instanceof Element ? record.target : record.target.parentElement;
-        if (target?.closest("#tel-downloader-progress-bar-container, .tel-download, ._tel_download_button_pinned_container")) return false;
-        return target?.closest(roots) || Array.from(record.addedNodes).some((node) =>
-          node instanceof Element && (node.matches(roots) || node.querySelector(roots))
-        );
-      })) scheduleRefresh();
-    });
-    observer.observe(document.body, {
-      childList: true, subtree: true, attributes: true,
-      attributeFilter: ["class", "src", "data-mid", "data-peer-id", "disabled", "aria-disabled", "hidden"],
-    });
-    // A fallback handles media source properties changed outside the DOM.
-    setInterval(() => { if (!document.hidden) refreshApp(); }, REFRESH_DELAY);
-    document.addEventListener("visibilitychange", scheduleRefresh);
-    refreshApp();
-  }
-
-  logger.info("Completed script setup.");
+  globalThis.TelCore = {
+    logger, t, downloadMedia, getMediaSource, isUsableDownloadButton,
+    localizeDownloadButton, createDownloadButton,
+  };
 })();

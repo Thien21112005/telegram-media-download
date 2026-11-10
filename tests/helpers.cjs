@@ -2,9 +2,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright-core');
 
-const source = fs.readFileSync(path.join(__dirname, '../extension/content/tel_download.js'), 'utf8')
-  .replace('logger.info("Completed script setup.");',
-    'window.downloads = { video: tel_download_video, audio: tel_download_audio, image: tel_download_image }; window.downloadI18n = { messages: UI_MESSAGES, languages: UI_LANGUAGES, translate };');
+const extensionDir = path.join(__dirname, '../extension');
+const manifest = JSON.parse(fs.readFileSync(path.join(extensionDir, 'manifest.json'), 'utf8'));
+// Concatenate the main-world content scripts in manifest order, then expose
+// test hooks. Without the isolated-world bridge the scripts use localStorage.
+const mainWorld = manifest.content_scripts.find(script => script.world === 'MAIN');
+const source = mainWorld.js.map(file => fs.readFileSync(path.join(extensionDir, file), 'utf8')).join('\n;\n') + `
+window.downloads = {
+  video: url => TelCore.downloadMedia(url, 'video'),
+  audio: url => TelCore.downloadMedia(url, 'audio'),
+  image: url => TelCore.downloadMedia(url, 'image'),
+};
+window.downloadI18n = { messages: TelI18n.UI_MESSAGES, languages: TelI18n.UI_LANGUAGES, translate: TelI18n.translate };`;
 
 exports.launch = () => chromium.launch({
   headless: true,

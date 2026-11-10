@@ -26,7 +26,9 @@
   "side_panel": {
     "default_path": "sidepanel/index.html"
   },
-  "permissions": ["sidePanel"],
+  "permissions": [
+    "sidePanel"
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -34,8 +36,15 @@
         "https://webk.telegram.org/*",
         "https://webz.telegram.org/*"
       ],
-      "js": ["content/tel_download.js"],
-      "run_at": "document_idle"
+      "js": [
+        "shared/i18n.js",
+        "content/core.js",
+        "content/webk.js",
+        "content/weba.js",
+        "content/main.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
     }
   ]
 }
