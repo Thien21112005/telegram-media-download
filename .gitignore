@@ -1,3 +1,8 @@
 .DS_Store
 node_modules/
 dist/
+
+# Impeccable working files (decision server state, scratch, screenshots)
+.impeccable/tmp/
+.impeccable/questions/
+.impeccable/review/
