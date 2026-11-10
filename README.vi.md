@@ -28,6 +28,12 @@
 - [Ghi công](#ghi-công)
 - [Giấy phép](#giấy-phép)
 
+<p align="center">
+  <img src="docs/images/sidepanel-light.png" width="300" alt="Side panel liệt kê ảnh và video của một chat theo ngày, có mục đã lưu, đang tải, lỗi và đang chờ">
+  <img src="docs/images/sidepanel-dark.png" width="300" alt="Side panel ở chế độ tối">
+</p>
+<p align="center"><sub>Side panel với dữ liệu demo: các ô hiện trạng thái đã lưu, đang tải (45%), lỗi, đã huỷ, đang chờ, và vạch <i>Bạn đang ở đây</i>.</sub></p>
+
 ## Tính năng
 
 - **Side panel đi theo cuộc trò chuyện.** Mở panel rồi cuộn chat: ảnh và video bạn lướt qua sẽ hiện trong panel theo đúng thứ tự trong chat, chia theo ngày. Vạch *Bạn đang ở đây* cho biết bạn đang đọc tới đâu.

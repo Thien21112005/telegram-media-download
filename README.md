@@ -28,6 +28,12 @@ English · [Tiếng Việt](./README.vi.md)
 - [Credits](#credits)
 - [License](#license)
 
+<p align="center">
+  <img src="docs/images/sidepanel-light.png" width="300" alt="Side panel listing a chat's photos and videos by day, with saved, downloading, failed and queued items">
+  <img src="docs/images/sidepanel-dark.png" width="300" alt="The same side panel in dark mode">
+</p>
+<p align="center"><sub>Side panel with demo content: tiles show saved, downloading (45%), failed, cancelled and queued items, and the <i>You are here</i> marker.</sub></p>
+
 ## Features
 
 - **Side panel that follows your chat.** Open the panel, scroll the chat, and every photo and video you pass appears in the panel in chat order, grouped by day. A *You are here* marker shows where you are reading.
@@ -82,6 +88,8 @@ Open the gear icon in the side panel, or right-click the extension icon and choo
 | Ask where to save | On | Single videos and audio opened in Telegram's viewer open a save dialog. Downloads from the side panel never ask. |
 
 Settings sync across your Chrome profile and apply to open Telegram tabs immediately.
+
+<p align="center"><img src="docs/images/options.png" width="480" alt="Settings page"></p>
 
 ## Limitations
 
