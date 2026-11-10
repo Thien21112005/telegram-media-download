@@ -1,32 +1,30 @@
 ---
-name: Bug Report
-about: Report a bug to help us improve
+name: Bug report
+about: Something does not work as expected
 title: ''
 labels: bug
 assignees: ''
 
 ---
 
-**Describe the issue**
-A clear and concise description of what the bug is.
+**What happened**
+A clear description of the problem.
 
-**To reproduce**
-Steps to reproduce the behavior:
-1. Go to /k/ (or /a/) Telegram Webapp 
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Steps to reproduce**
+1. Open Telegram Web (`/k/` or `/a/`)
+2. ...
+3. ...
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**What you expected**
+
+**Environment**
+- Telegram Web version: `/k/` or `/a/`
+- Browser and version: (e.g. Chrome 131, Edge 131)
+- Extension version: (shown on `chrome://extensions`)
+- Operating system:
+
+**Console errors**
+Open DevTools in the Telegram tab (F12), go to Console and paste lines that start with `[Tel Download]`.
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
-
-**Environment:**
- - Browser: [e.g. Chrome, Firefox]
- - Tampermonkey (or other similar extensions) Version: [e.g. 4.11]
- - Script Version: [e.g. 1.0.0]
-
-**Additional context**
-Add any other context about the problem here.
+Optional. Please hide private chats and names.
