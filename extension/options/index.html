@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telegram Media Downloader</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="head">
+      <img src="../icons/icon-48.png" width="40" height="40" alt="">
+      <div>
+        <h1>Telegram Media Downloader</h1>
+        <p class="muted" id="title"></p>
+      </div>
+    </header>
+
+    <form class="settings" id="form">
+      <div class="field">
+        <label for="language" id="language-label"></label>
+        <select id="language"></select>
+      </div>
+      <div class="field">
+        <label for="concurrency" id="concurrency-label"></label>
+        <select id="concurrency">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="folder" id="folder-label"></label>
+        <input id="folder" type="text" spellcheck="false" autocomplete="off" aria-describedby="folder-hint">
+        <p class="hint" id="folder-hint"></p>
+      </div>
+      <div class="field check">
+        <input id="ask" type="checkbox" aria-describedby="ask-hint">
+        <div>
+          <label for="ask" id="ask-label"></label>
+          <p class="hint" id="ask-hint"></p>
+        </div>
+      </div>
+      <p class="saved" id="saved" role="status"></p>
+    </form>
+
+    <section class="about">
+      <h2 id="about-title"></h2>
+      <p id="about-credit"></p>
+      <p id="about-license"></p>
+      <p><a id="source" href="https://github.com/Thien21112005/telegram-media-download" target="_blank" rel="noopener"></a> ·
+        <a href="https://github.com/Neet-Nestor/Telegram-Media-Downloader" target="_blank" rel="noopener">Neet-Nestor/Telegram-Media-Downloader</a></p>
+    </section>
+  </main>
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
