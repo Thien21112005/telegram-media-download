@@ -28,6 +28,8 @@
       errorIncomplete: "Incomplete media response; received byte count does not match",
       errorTimeout: "No data received for 30 seconds. Please retry.",
       errorUnexpected: "Download failed: {message}",
+      errorNotInView: "Scroll back to this item in the chat, then try again.",
+      errorNoSource: "Telegram did not open this media. Try again.",
     },
     "zh-CN": {
       downloads: "下载", downloadsCount: "下载（{count}）", mediaDownloads: "媒体下载",
@@ -47,6 +49,8 @@
       errorIncomplete: "媒体数据不完整；收到的字节数与预期不符",
       errorTimeout: "已连续 30 秒未收到数据，请重试。",
       errorUnexpected: "下载失败：{message}",
+      errorNotInView: "请在聊天中滚动回到此项，然后重试。",
+      errorNoSource: "Telegram 未能打开此媒体，请重试。",
     },
     "zh-TW": {
       downloads: "下載", downloadsCount: "下載（{count}）", mediaDownloads: "媒體下載",
@@ -66,6 +70,8 @@
       errorIncomplete: "媒體資料不完整；收到的位元組數與預期不符",
       errorTimeout: "已連續 30 秒未收到資料，請重試。",
       errorUnexpected: "下載失敗：{message}",
+      errorNotInView: "請在聊天中捲動回到此項目，然後重試。",
+      errorNoSource: "Telegram 未能開啟此媒體，請重試。",
     },
     ru: {
       downloads: "Загрузки", downloadsCount: "Загрузки ({count})", mediaDownloads: "Загрузка медиа",
@@ -85,6 +91,8 @@
       errorIncomplete: "Данные неполные; число полученных байтов не совпадает с ожидаемым",
       errorTimeout: "Нет данных в течение 30 секунд. Повторите попытку.",
       errorUnexpected: "Не удалось скачать: {message}",
+      errorNotInView: "Прокрутите чат обратно к этому элементу и повторите попытку.",
+      errorNoSource: "Telegram не открыл этот медиафайл. Повторите попытку.",
     },
     my: {
       downloads: "ဒေါင်းလုဒ်များ", downloadsCount: "ဒေါင်းလုဒ်များ ({count})", mediaDownloads: "မီဒီယာဒေါင်းလုဒ်များ",
@@ -104,6 +112,8 @@
       errorIncomplete: "မီဒီယာဒေတာ မပြည့်စုံပါ။ ရရှိသော ဘိုက်အရေအတွက် မကိုက်ညီပါ",
       errorTimeout: "စက္ကန့် ၃၀ ကြာ ဒေတာမရရှိပါ။ ထပ်စမ်းပါ။",
       errorUnexpected: "ဒေါင်းလုဒ် မအောင်မြင်ပါ: {message}",
+      errorNotInView: "ချတ်ထဲတွင် ဤအရာဆီသို့ ပြန်လှိမ့်ပြီး ထပ်စမ်းပါ။",
+      errorNoSource: "Telegram က ဤမီဒီယာကို မဖွင့်နိုင်ပါ။ ထပ်စမ်းပါ။",
     },
     vi: {
       downloads: "Tải xuống", downloadsCount: "Tải xuống ({count})", mediaDownloads: "Tải media",
@@ -123,6 +133,8 @@
       errorIncomplete: "Dữ liệu media không đầy đủ; số byte nhận được không khớp",
       errorTimeout: "Không nhận được dữ liệu trong 30 giây. Hãy thử lại.",
       errorUnexpected: "Tải thất bại: {message}",
+      errorNotInView: "Hãy cuộn chat lại tới mục này rồi thử lại.",
+      errorNoSource: "Telegram không mở được media này. Hãy thử lại.",
     },
   };
   const matchLanguage = (tag) => {
