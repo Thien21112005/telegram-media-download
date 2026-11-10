@@ -43,7 +43,8 @@
       return toExtension({ type: "download:expect", url, folder: String(folder || "") });
     },
     task: ({ task }) => toExtension({ type: "task", task }),
-    media: ({ chat, items }) => toExtension({ type: "media", chat, items }),
+    media: ({ chat, items, reset }) => toExtension({ type: "media", chat, items, reset: Boolean(reset) }),
+    view: ({ chat, ids }) => toExtension({ type: "view", chat, ids }),
   };
   document.addEventListener("tel-dl:to-extension", (event) => {
     let message;
@@ -68,7 +69,7 @@
   });
 
   // Messages from the side panel to this tab, forwarded to the page.
-  const TO_PAGE = new Set(["scan:get", "scan:download", "scan:clear", "task:cancel"]);
+  const TO_PAGE = new Set(["scan:get", "scan:download", "scan:cancel", "scan:clear", "task:cancel"]);
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (sender.id !== chrome.runtime.id || !TO_PAGE.has(message?.type)) return false;
     requestPage(message).then(sendResponse);

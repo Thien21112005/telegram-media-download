@@ -40,7 +40,8 @@
       const isVideo = Boolean(element.querySelector("video, .video-time, .video-play, .btn-circle.video-play"));
       const hasPhoto = Boolean(element.querySelector("img.media-photo, canvas.media-photo, img.thumbnail, img"));
       if (!isVideo && !hasPhoto) return null;
-      return { mid, kind: isVideo ? "video" : "image", duration: element.querySelector(".video-time")?.textContent.trim() || "" };
+      const day = element.closest(".bubbles-date-group")?.querySelector(".is-date .service-msg, .is-date .bubble-content, .service-msg")?.textContent.trim() || "";
+      return { mid, kind: isVideo ? "video" : "image", day, duration: element.querySelector(".video-time")?.textContent.trim() || "" };
     },
     find: (mid) =>
       document.querySelector(`.bubble .attachment .album-item[data-mid="${CSS.escape(mid)}"]`) ||
@@ -71,7 +72,8 @@
       if (!mid) return null;
       const isVideo = Boolean(element.querySelector("video, .message-media-duration, .icon-large-play"));
       if (!isVideo && !element.querySelector("img, canvas")) return null;
-      return { mid, kind: isVideo ? "video" : "image", duration: element.querySelector(".message-media-duration")?.textContent.trim() || "" };
+      const day = element.closest(".message-date-group")?.querySelector(".sticky-date")?.textContent.trim() || "";
+      return { mid, kind: isVideo ? "video" : "image", day, duration: element.querySelector(".message-media-duration")?.textContent.trim() || "" };
     },
     find: (mid) =>
       document.querySelector(`#album-media-message-${CSS.escape(mid)} .media-inner`) ||
@@ -152,7 +154,7 @@
       }
       return;
     }
-    const item = { id, mid: description.mid, kind: description.kind, duration: description.duration, thumb: makeThumbnail(element) };
+    const item = { id, mid: description.mid, kind: description.kind, day: description.day, duration: description.duration, thumb: makeThumbnail(element) };
     items.set(id, item);
     announce(item);
     if (!item.thumb) {
@@ -162,8 +164,28 @@
   };
 
   let observed = new WeakSet();
+  // Items currently on screen in the chat; the side panel marks the reader's place with them.
+  const onScreen = new Set();
+  let viewTimer;
+  const announceView = () => {
+    if (viewTimer) return;
+    viewTimer = setTimeout(() => {
+      viewTimer = null;
+      postToExtension({ type: "view", chat: { key: chatKey() }, ids: Array.from(onScreen) });
+    }, 200);
+  };
   const visibility = adapter && new IntersectionObserver((entries) => {
-    for (const entry of entries) if (entry.isIntersecting) record(entry.target);
+    for (const entry of entries) {
+      const description = adapter.describe(entry.target);
+      const id = description && `${chatKey()}:${description.mid}`;
+      if (entry.isIntersecting) {
+        record(entry.target);
+        if (id) onScreen.add(id);
+      } else if (id) {
+        onScreen.delete(id);
+      }
+    }
+    announceView();
   }, { threshold: 0.25 });
   const scan = () => {
     if (!adapter) return;
@@ -184,6 +206,7 @@
   if (adapter) {
     new MutationObserver(scheduleScan).observe(document.body, { childList: true, subtree: true });
     window.addEventListener("hashchange", () => {
+      onScreen.clear();
       postToExtension({ type: "media", chat: { key: chatKey(), title: adapter.chatTitle() }, items: [], reset: true });
       scheduleScan();
     });
@@ -272,10 +295,18 @@
     supported: Boolean(adapter),
     chat: { key: chatKey(), title: adapter?.chatTitle() || "" },
     items: Array.from(itemsFor(chatKey()).values()),
+    view: Array.from(onScreen),
   });
 
   onExtensionMessage("scan:get", snapshot);
   onExtensionMessage("scan:download", ({ ids }) => download(ids));
+  onExtensionMessage("scan:cancel", () => {
+    const dropped = resolveQueue.splice(0);
+    for (const item of dropped) {
+      postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "cancelled", fileName: "", received: 0, total: null, error: "" } });
+    }
+    return { cancelled: dropped.length };
+  });
   onExtensionMessage("scan:clear", () => {
     itemsFor(chatKey()).clear();
     resolveQueue.length = 0;
