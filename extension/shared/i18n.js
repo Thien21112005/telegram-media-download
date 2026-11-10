@@ -7,7 +7,7 @@
 (function () {
   if (globalThis.TelI18n) return;
   const UI_LANGUAGES = {
-    en: "English", "zh-CN": "简体中文", "zh-TW": "繁體中文", ru: "Русский", my: "မြန်မာ",
+    en: "English", "zh-CN": "简体中文", "zh-TW": "繁體中文", ru: "Русский", my: "မြန်မာ", vi: "Tiếng Việt",
   };
   const UI_MESSAGES = {
     en: {
@@ -104,6 +104,25 @@
       errorIncomplete: "မီဒီယာဒေတာ မပြည့်စုံပါ။ ရရှိသော ဘိုက်အရေအတွက် မကိုက်ညီပါ",
       errorTimeout: "စက္ကန့် ၃၀ ကြာ ဒေတာမရရှိပါ။ ထပ်စမ်းပါ။",
       errorUnexpected: "ဒေါင်းလုဒ် မအောင်မြင်ပါ: {message}",
+    },
+    vi: {
+      downloads: "Tải xuống", downloadsCount: "Tải xuống ({count})", mediaDownloads: "Tải media",
+      download: "Tải xuống", loadingMedia: "Media đang tải", hide: "Ẩn", show: "Hiện",
+      dismiss: "Bỏ thẻ tải xuống", progress: "Tiến độ tải", cancel: "Huỷ", retry: "Thử lại",
+      settings: "Cài đặt", language: "Ngôn ngữ giao diện", automatic: "Theo trình duyệt",
+      preparing: "Đang chuẩn bị", queued: "Đang chờ", downloading: "Đang tải", saving: "Đang lưu",
+      completed: "Hoàn tất", handedOff: "Đã chuyển cho trình duyệt", failed: "Thất bại", cancelled: "Đã huỷ",
+      rate: "{speed}/giây", video: "video", audio: "âm thanh", image: "ảnh", unknownType: "loại tệp không xác định",
+      errorHttp: "Yêu cầu tải thất bại (HTTP {status})",
+      errorMime: "Cần {kind}, nhưng nhận được {mime}",
+      errorRangeMissing: "Thiếu Content-Range hoặc Content-Range không hợp lệ",
+      errorRangeInconsistent: "Phạm vi dữ liệu không khớp; đã dừng tải để tránh hỏng tệp",
+      errorRangeUnsupported: "Máy chủ không còn hỗ trợ tải từng phần",
+      errorLength: "Content-Length không hợp lệ", errorEmpty: "Phản hồi media trống",
+      errorTooLarge: "Dữ liệu nhận được vượt quá kích thước dự kiến",
+      errorIncomplete: "Dữ liệu media không đầy đủ; số byte nhận được không khớp",
+      errorTimeout: "Không nhận được dữ liệu trong 30 giây. Hãy thử lại.",
+      errorUnexpected: "Tải thất bại: {message}",
     },
   };
   const matchLanguage = (tag) => {

@@ -94,7 +94,7 @@ test('translation catalogs have every message and preserve interpolation paramet
 
 test('browser language detection handles regions, Chinese scripts, and English fallback', async () => {
   for (const [locale, expected, label] of [
-    ['en-GB', 'en', 'Download'], ['ru-RU', 'ru', 'Скачать'], ['my-MM', 'my', 'ဒေါင်းလုဒ်လုပ်ရန်'],
+    ['en-GB', 'en', 'Download'], ['ru-RU', 'ru', 'Скачать'], ['my-MM', 'my', 'ဒေါင်းလုဒ်လုပ်ရန်'], ['vi-VN', 'vi', 'Tải xuống'],
     ['zh-CN', 'zh-CN', '下载'], ['zh-SG', 'zh-CN', '下载'],
     ['zh-TW', 'zh-TW', '下載'], ['zh-HK', 'zh-TW', '下載'], ['zh-MO', 'zh-TW', '下載'],
     ['zh-Hant-CN', 'zh-TW', '下載'], ['zh-Hans-HK', 'zh-CN', '下载'], ['fr-FR', 'en', 'Download'],
