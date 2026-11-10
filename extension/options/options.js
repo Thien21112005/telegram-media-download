@@ -22,6 +22,7 @@
     $("ask-hint").textContent = t("optionAskWhereHint");
     $("about-title").textContent = t("aboutTitle");
     $("about-credit").textContent = t("aboutCredit", { author: "Nestor Qin" });
+    $("about-maintainer").textContent = t("aboutMaintainer", { maintainer: "Thien21112005" });
     $("about-license").textContent = t("aboutLicense");
     $("source").textContent = t("sourceCode");
 

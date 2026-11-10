@@ -104,6 +104,7 @@
         return;
       }
       if (message.chat.title) state.chat.title = message.chat.title;
+      const before = state.items.size;
       for (const item of message.items) {
         state.items.set(item.id, item);
         const tile = tiles.get(item.id);
@@ -111,6 +112,12 @@
       }
       if (state.status !== "ready") state.status = "ready";
       render();
+      if (state.items.size > before) {
+        const dot = document.querySelector(".live-dot");
+        dot.classList.remove("found");
+        void dot.offsetWidth; // restart the animation
+        dot.classList.add("found");
+      }
     } else if (message.type === "view" && message.chat?.key === state.chat.key) {
       state.onScreen = new Set(message.ids);
       for (const [id, tile] of tiles) tile.dataset.onScreen = String(state.onScreen.has(id));
@@ -200,8 +207,8 @@
     } else if (task.state === "cancelled") {
       overlay.innerHTML = `<span class="ring">${icon("stop")}</span>`;
     } else {
-      overlay.innerHTML = `<span></span>`;
-      overlay.firstChild.textContent = t(task.state);
+      // Queued or preparing: an empty meter; the state word lives in the aria-label.
+      overlay.innerHTML = `<span class="meter"><i></i></span>`;
     }
   };
 
