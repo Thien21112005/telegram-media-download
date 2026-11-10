@@ -16,7 +16,7 @@ for (const file of files.filter((f) => /\.(m?js)$/.test(f))) {
 
 const manifest = JSON.parse(await readFile(path.join(root, "extension/manifest.json"), "utf8"));
 const keys = new Set(JSON.stringify(manifest).match(/__MSG_(\w+)__/g).map((m) => m.slice(6, -2)));
-const referenced = new Set([...keys, "panelComingSoon"]);
+const referenced = keys;
 const locales = await readdir(path.join(root, "extension/_locales"));
 let failed = false;
 for (const locale of locales) {

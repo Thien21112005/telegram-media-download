@@ -26,10 +26,19 @@
   "side_panel": {
     "default_path": "sidepanel/index.html"
   },
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true
+  },
   "permissions": [
     "sidePanel",
     "storage",
     "downloads"
+  ],
+  "host_permissions": [
+    "https://web.telegram.org/*",
+    "https://webk.telegram.org/*",
+    "https://webz.telegram.org/*"
   ],
   "content_scripts": [
     {

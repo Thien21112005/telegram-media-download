@@ -3,15 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="extName">Telegram Media Downloader</title>
+  <title>Telegram Media Downloader</title>
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-  <main class="placeholder">
-    <img src="../icons/icon-48.png" width="48" height="48" alt="">
-    <h1 data-i18n="extName">Telegram Media Downloader</h1>
-    <p data-i18n="panelComingSoon">Media found while you scroll a chat will appear here.</p>
-  </main>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 7v6m0 3.5v.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M10.3 3h3.4l.5 2.4 1.7 1 2.3-.8 1.7 2.9-1.8 1.6v2l1.8 1.6-1.7 2.9-2.3-.8-1.7 1-.5 2.4h-3.4l-.5-2.4-1.7-1-2.3.8-1.7-2.9L5.9 13v-2L4.1 9.5l1.7-2.9 2.3.8 1.7-1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.5 16l4-4.5 3 3 2-2 2.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="top">
+    <div class="top-row">
+      <h1 class="chat-title" id="chat-title" dir="auto">Telegram Media Downloader</h1>
+      <button class="icon-button" id="open-settings" type="button"><svg aria-hidden="true"><use href="#i-gear"/></svg></button>
+    </div>
+    <p class="status" id="status" role="status"><span class="live-dot" aria-hidden="true"></span><span id="status-text"></span></p>
+  </header>
+
+  <div class="toolbar" id="toolbar" hidden>
+    <div class="filters" role="radiogroup" id="filters">
+      <button type="button" role="radio" data-filter="all"><span data-label></span> <span class="count"></span></button>
+      <button type="button" role="radio" data-filter="image"><span data-label></span> <span class="count"></span></button>
+      <button type="button" role="radio" data-filter="video"><span data-label></span> <span class="count"></span></button>
+    </div>
+    <button class="text-button" id="select-all" type="button"></button>
+  </div>
+
+  <main class="list" id="list" tabindex="-1"></main>
+
+  <section class="empty" id="empty" hidden>
+    <svg class="empty-icon" aria-hidden="true"><use href="#i-photo"/></svg>
+    <h2 id="empty-title"></h2>
+    <p id="empty-hint"></p>
+    <button class="primary" id="empty-action" type="button" hidden></button>
+  </section>
+
+  <footer class="bar" id="bar" hidden>
+    <div class="bar-progress" aria-hidden="true"><i id="bar-progress"></i></div>
+    <div class="bar-row">
+      <div class="bar-text">
+        <strong id="bar-summary"></strong>
+        <button class="text-button" id="clear-selection" type="button" hidden></button>
+      </div>
+      <button class="secondary" id="cancel" type="button" hidden></button>
+      <button class="primary" id="download" type="button"></button>
+    </div>
+    <p class="bar-note" id="bar-note" hidden></p>
+  </footer>
+
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/settings.js"></script>
   <script src="panel.js"></script>
 </body>
 </html>
