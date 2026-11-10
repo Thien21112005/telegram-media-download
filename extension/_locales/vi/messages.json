@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Telegram Media Downloader"
+  },
+  "extDescription": {
+    "message": "Tải ảnh, GIF, video và tin nhắn thoại trên Telegram Web, kể cả ở những cuộc trò chuyện chặn lưu nội dung."
+  },
+  "actionTitle": {
+    "message": "Mở Telegram Media Downloader"
+  },
+  "panelComingSoon": {
+    "message": "Ảnh và video bạn lướt qua khi cuộn chat sẽ hiện ở đây."
+  }
+}

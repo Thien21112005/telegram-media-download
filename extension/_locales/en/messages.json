@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Telegram Media Downloader"
+  },
+  "extDescription": {
+    "message": "Download images, GIFs, videos and voice messages from Telegram Web, including chats that restrict saving."
+  },
+  "actionTitle": {
+    "message": "Open Telegram Media Downloader"
+  },
+  "panelComingSoon": {
+    "message": "Media found while you scroll a chat will appear here."
+  }
+}

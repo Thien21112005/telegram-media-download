@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Telegram 受限图片视频下载器"
+  },
+  "extDescription": {
+    "message": "在 Telegram 网页版下载图片、GIF、视频和语音消息，包括禁止保存内容的会话。"
+  },
+  "actionTitle": {
+    "message": "打开 Telegram 受限图片视频下载器"
+  },
+  "panelComingSoon": {
+    "message": "滚动聊天时发现的媒体将显示在这里。"
+  }
+}

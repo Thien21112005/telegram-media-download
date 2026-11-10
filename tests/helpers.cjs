@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright-core');
 
-const source = fs.readFileSync(path.join(__dirname, '../src/tel_download.js'), 'utf8')
+const source = fs.readFileSync(path.join(__dirname, '../extension/content/tel_download.js'), 'utf8')
   .replace('logger.info("Completed script setup.");',
     'window.downloads = { video: tel_download_video, audio: tel_download_audio, image: tel_download_image }; window.downloadI18n = { messages: UI_MESSAGES, languages: UI_LANGUAGES, translate };');
 

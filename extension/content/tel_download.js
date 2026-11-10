@@ -1,25 +1,8 @@
-// ==UserScript==
-// @name         Telegram Media Downloader
-// @name:en      Telegram Media Downloader
-// @name:zh-CN   Telegram 受限图片视频下载器
-// @name:zh-TW   Telegram 受限圖片影片下載器
-// @name:ru      Telegram: загрузчик медиафайлов
-// @version      2.0
-// @namespace    https://github.com/Neet-Nestor/Telegram-Media-Downloader
-// @description  Download images, GIFs, videos, and voice messages on the Telegram webapp from private channels that disable downloading and restrict saving content
-// @description:en  Download images, GIFs, videos, and voice messages on the Telegram webapp from private channels that disable downloading and restrict saving content
-// @description:ru Загружайте изображения, GIF-файлы, видео и голосовые сообщения в веб-приложении Telegram из частных каналов, которые отключили загрузку и ограничили сохранение контента
-// @description:zh-CN 从禁止下载的Telegram频道中下载图片、视频及语音消息
-// @description:zh-TW 從禁止下載的 Telegram 頻道中下載圖片、影片及語音訊息
-// @author       Nestor Qin
-// @license      GNU GPLv3
-// @website      https://github.com/Neet-Nestor/Telegram-Media-Downloader
-// @match        https://web.telegram.org/*
-// @match        https://webk.telegram.org/*
-// @match        https://webz.telegram.org/*
-// @icon         https://img.icons8.com/color/452/telegram-app--v5.png
-// ==/UserScript==
-
+// Telegram Media Downloader – content script.
+// Based on the Telegram Media Downloader userscript by Nestor Qin
+// (https://github.com/Neet-Nestor/Telegram-Media-Downloader).
+// Modified for the Chrome extension by Thien21112005.
+// SPDX-License-Identifier: GPL-3.0-only
 
 (function () {
   // Keep translations in the userscript so installation needs no extra files.

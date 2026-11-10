@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "Telegram Media Downloader"
+  },
+  "extDescription": {
+    "message": "Telegram Web တွင် ပုံ၊ GIF၊ ဗီဒီယိုနှင့် အသံမက်ဆေ့ချ်များကို ဒေါင်းလုဒ်လုပ်ပါ၊ သိမ်းဆည်းခွင့်ပိတ်ထားသော ချတ်များအပါအဝင်။"
+  },
+  "actionTitle": {
+    "message": "Telegram Media Downloader ကို ဖွင့်ရန်"
+  },
+  "panelComingSoon": {
+    "message": "ချတ်ကို လှိမ့်ကြည့်စဉ် တွေ့ရှိသော မီဒီယာများ ဤနေရာတွင် ပေါ်လာပါမည်။"
+  }
+}
