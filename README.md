@@ -1,181 +1,137 @@
 <div align="center">
 
-# Telegram Video Downloader / Telegram Media Downloader
+<img src="extension/icons/icon-128.png" width="96" height="96" alt="">
 
-**Unlock Telegram: Download Anything You Like.**
+# Telegram Media Downloader
 
-[![GitHub License](https://img.shields.io/github/license/Neet-Nestor/Telegram-Media-Downloader)](./LICENSE)
-[![Greasy Fork Version](https://img.shields.io/greasyfork/v/446342-telegram-media-downloader)](https://greasyfork.org/scripts/446342-telegram-media-downloader)
-[![Greasy Fork Downloads](https://img.shields.io/greasyfork/dt/446342-telegram-media-downloader)](https://greasyfork.org/scripts/446342-telegram-media-downloader)
+**A Chrome extension that downloads photos, videos, GIFs and voice messages from Telegram Web, including chats and channels that restrict saving.**
+
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue)](./LICENSE)
+[![Tests](https://github.com/Thien21112005/telegram-media-download/actions/workflows/test.yml/badge.svg)](https://github.com/Thien21112005/telegram-media-download/actions/workflows/test.yml)
+[![Latest release](https://img.shields.io/github/v/release/Thien21112005/telegram-media-download)](https://github.com/Thien21112005/telegram-media-download/releases/latest)
+
+English · [Tiếng Việt](./README.vi.md)
 
 </div>
 
-## Overview
-This user script unlocks and enables download of images, GIFs, audios, and videos in Telegram webapps from chats, stories, and even private channels where downloading is disabled or restricted.
+> This is an unofficial tool. It is not made by, affiliated with or endorsed by Telegram.
 
-(Note: some features are only available for specific Telegram webapp version. e.g. Audio message download is only available for the K webapp version.)
+## Contents
 
-### What are user scripts?
-User scripts put you in control of your  browsing experience. Once installed, they automatically make the sites you visit better by adding features, making them easier to use, or taking out the annoying bits. The user scripts on Greasy Fork were written by other users and posted to share with the world. They're free to install and easy to use.
+- [Features](#features)
+- [Install](#install)
+- [Use](#use)
+- [Settings](#settings)
+- [Limitations](#limitations)
+- [FAQ](#faq)
+- [Development](#development)
+- [Credits](#credits)
+- [License](#license)
 
-## Installation
-### Greasy Fork
-1. install a user script manager
+## Features
 
-    To use user scripts you need to first install a user script manager. Which user script manager you can use depends on which browser you use.
+- **Side panel that follows your chat.** Open the panel, scroll the chat, and every photo and video you pass appears in the panel in chat order, grouped by day. A *You are here* marker shows where you are reading.
+- **Tick and download in one go.** Filter photos or videos, select a whole day, select everything, or shift-click a range, then download the selection. Each tile shows its own progress and stays marked as saved, failed or cancelled.
+- **Original files, sorted into folders.** Files are saved as Telegram serves them, into `Downloads/Telegram/<chat name>/` by default, without a save dialog for every file.
+- **Download buttons where Telegram hides them.** Telegram's media viewer, the story viewer and the pinned audio bar get a download button back in chats that restrict saving.
+- **Progress panel in Telegram.** Shows speed, size and percentage, with Cancel and Retry; up to four downloads run at once.
+- **Six languages.** English, Tiếng Việt, 简体中文, 繁體中文, Русский and မြန်မာ, following your browser language unless you pick one.
 
-    - Chrome: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Firefox: [Greasemonkey](https://addons.mozilla.org/firefox/addon/greasemonkey/), [Tampermonkey](https://addons.mozilla.org/firefox/addon/tampermonkey/), or [Violentmonkey](https://addons.mozilla.org/firefox/addon/violentmonkey/)
-    - Safari: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Userscripts](https://apps.apple.com/app/userscripts/id1463298887)
-    - Microsoft Edge: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Opera: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Maxthon: [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
+## Install
 
-    (Note, If you are using Tampermonkey extension in a Chrome-based browser, following [instructions](https://www.tampermonkey.net/faq.php#Q209) to enable Developer Mode.)
+The extension is installed from a `.zip` file. It is not on the Chrome Web Store.
 
-2. Install this script by visiting Greasy Fork:
-    https://greasyfork.org/scripts/446342-telegram-media-downloader
+1. Download `telegram-media-download-v<version>.zip` from the [latest release](https://github.com/Thien21112005/telegram-media-download/releases/latest).
+2. Unzip it into a folder you will keep, for example `Documents/telegram-media-download`. Chrome loads the extension from this folder, so do not delete it.
+3. Open `chrome://extensions` (Edge: `edge://extensions`).
+4. Turn on **Developer mode** (top right in Chrome, left sidebar in Edge).
+5. Click **Load unpacked** and select the unzipped folder (the one that contains `manifest.json`).
+6. Optional: click the puzzle icon in the toolbar and pin **Telegram Media Downloader**.
 
-### Manual Installation
-1. install a user script manager
+**Update:** download the new release, replace the files in the same folder, then click the reload icon on the extension's card in `chrome://extensions`. Reload any open Telegram tabs.
 
-    To use user scripts you need to first install a user script manager. Which user script manager you can use depends on which browser you use.
+**Requirements:** Chrome 116 or newer, or a Chromium browser with side panel support such as Edge.
 
-    - Chrome: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Firefox: [Greasemonkey](https://addons.mozilla.org/firefox/addon/greasemonkey/), [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo), or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Safari: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Userscripts](https://apps.apple.com/app/userscripts/id1463298887)
-    - Microsoft Edge: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Opera: [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) or [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
-    - Maxthon: [Violentmonkey](https://chrome.google.com/webstore/detail/violent-monkey/jinjaccalgkegednnccohejagnlnfdag)
+## Use
 
-    (Note, If you are using Tampermonkey extension in a Chrome-based browser, following [instructions](https://www.tampermonkey.net/faq.php#Q209) to enable Developer Mode.)
-    
-2. Open Tampermonkey Dashboard, drag & drop src/tel_download.js into it and clicks the "install" button
+Open [Telegram Web](https://web.telegram.org/k/). Both versions work; `/k/` is recommended because some features (voice messages, pinned audio) exist only there.
 
-## How to Use
-This script only works on Telegram Webapp.
+### Download many items from a chat
 
-For channels and chats that allow saving content, this script will have no effect. Please just use the official download button provided by the telegram webapp instead.
+1. Open a chat, group or channel.
+2. Click the extension icon in the toolbar. The side panel opens next to Telegram.
+3. Scroll the chat. Photos and videos appear in the panel as they come into view.
+4. Tick the items you want, or use **Select day** / **Select all**. Shift-click selects a range.
+5. Click **Download**.
 
-For channels and chats that disable downloading and restrict saving content, this script will add the download button back for images, GIFs and videos.
+For each item, Telegram's viewer opens for a moment so the extension can fetch the original file, then closes again. Keep the Telegram tab open until the panel shows *Finished*. The first time, Chrome may ask whether `web.telegram.org` may download multiple files; choose **Allow**.
 
-![Image Download](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2VjNmU2ZDM0YTFlOWY4YTMzZDZmNjVlMDE2ODQ4OGY4N2E3MDFkNSZlcD12MV9pbnRlcm5hbF9naWZzX2dpZklkJmN0PWc/lqCVcw0pCd2VA3zqoE/giphy.gif)
-![GIF Download](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzYwMzM3ZTMzYmI1MzA4M2EyYmY0NTFlOTg4OWFhNjhjNDk5YTkzYiZlcD12MV9pbnRlcm5hbF9naWZzX2dpZklkJmN0PWc/wnYzW4vwpPdeuo62nQ/giphy.gif)
-![Video Download](https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXcxYnJxaXMxcW05YW5rZ2YzZzE0bTU4aTBwYXI1N3pmdnVzbDFrdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/EEPbblwmSpteAmwLls/giphy.gif)
-![Story Download](https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3Z5Y2VzM2QzbW1xc3ZwNTQ2N3Q0a3lnanpxdW55c2Qzajl5NXZsaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xJFjBGi8isHPR5cuHl/giphy.gif)
+### Download a single item
 
-Downloads started by this script appear in a task panel at the bottom-right, including videos, images, and audio. Telegram's own download controls continue to use Telegram's interface.
+Open a photo, video or story in Telegram as usual. In chats that restrict saving, a download button appears in the viewer's toolbar (and in the video player's controls). Progress shows in a panel at the bottom right of Telegram.
 
-### Supported Webapp Versions
-There are 2 different versions of telegram webapps:
-- https://webk.telegram.org / https://web.telegram.org/k/ (**Recommended**)
-- https://webz.telegram.org / https://web.telegram.org/a/
+## Settings
 
-This script should work on both versions of webapp, but some features are only available in the /k/ version (such as voice message downloads). If certain features are not working, switching to the /k/ version is recommended.
+Open the gear icon in the side panel, or right-click the extension icon and choose **Options**.
 
-### Check Downloading Progress
-The task panel shows the filename, received size, and download speed. When the total size is known, it also shows a percentage. Up to two files download at once; additional files wait in the queue. Clicking the same media again focuses its active task.
+| Setting | Default | What it does |
+|---|---|---|
+| Interface language | Browser language | Language of the panel, buttons and messages. |
+| Simultaneous downloads | 2 | How many files download at once (1–4). |
+| Download folder | `Telegram/{chat}` | Subfolder inside your browser's download folder. `{chat}` becomes the chat name. Leave empty to save directly into the download folder. |
+| Ask where to save | On | Single videos and audio opened in Telegram's viewer open a save dialog. Downloads from the side panel never ask. |
 
-- **Hide** collapses the panel. **×** dismisses one task card. Both leave downloads running.
-- **Cancel** stops a queued or active download and discards unfinished file writes. Cancellation is disabled while the completed file is being committed.
-- **Retry** restarts a failed or cancelled download from the beginning. If the media URL has expired, reopen the media and use its download button again.
-- **Completed** means direct file saving succeeded. **Sent to browser** means the file was handed to the browser's download manager; check that manager for the final save result.
+Settings sync across your Chrome profile and apply to open Telegram tabs immediately.
 
-Keep the Telegram tab open until the transfer finishes. Browsers without direct file saving collect the downloaded data before handing it to the download manager, so large downloads can use substantial browser resources. Errors are also available in the [DevTools console](https://developer.chrome.com/docs/devtools/open/).
+## Limitations
 
-### Interface Language
+- **Telegram Web must stay open** while files download. Downloads run inside the Telegram tab.
+- **Large videos use memory.** Without a save dialog, the browser collects the whole file before saving it.
+- **The side panel lists photos and videos.** Files, music and voice messages are not listed yet; download voice messages from the pinned audio bar in `/k/`.
+- **Telegram may change its page.** The extension reads Telegram Web's page structure. If Telegram changes it, buttons may disappear or the panel may stay empty. Please [open an issue](https://github.com/Thien21112005/telegram-media-download/issues) with your Telegram version (`/k/` or `/a/`).
+- **Long chats.** Telegram removes messages far from the screen. If an item scrolled far away, the panel asks you to scroll back to it before downloading.
 
-The download UI supports English, Simplified Chinese, Traditional Chinese, Russian, and Burmese. It uses the first supported language in your browser's language preferences, falling back to English. Chinese script and regional variants are recognized, including Traditional Chinese for Taiwan, Hong Kong, and Macau.
+## FAQ
 
-Open the gear-shaped **Settings** button in the download panel, then use **Interface language** to choose a language or return to **Browser language**. Changes apply immediately to existing tasks, errors, and the script's download buttons without interrupting downloads. The preference is saved on the current Telegram web origin and shared across its tabs; if browser storage is blocked, it lasts for the current page only. Browser-provided dialogs and technical error details keep their original language.
+**The panel says "Reload the Telegram tab to connect".**
+Telegram was already open when the extension was installed or updated. Reload the Telegram tab.
 
-## Contributing
+**The panel stays empty while I scroll.**
+Check that the chat contains photos or videos and that you are on `web.telegram.org`. If it still stays empty, Telegram may have changed its page; please open an issue.
 
-We welcome contributions from the community! If you’d like to contribute to Telegram Media Downloader, follow these steps:
+**Where are my files?**
+In your browser's download folder, under `Telegram/<chat name>/` unless you changed the folder setting. Open `chrome://downloads` to see them.
 
-### Reporting Issues
-If you find a bug, compatibility issue, or have a feature request, please:
+**Is my data sent anywhere?**
+No. The extension has no server. It only makes the same requests Telegram Web makes, from your own browser session.
 
-1. Check if the issue has already been reported in the Issues tab.
-2. If not, create a new issue with a clear title and description. Attach screenshots or logs if applicable.
+**Is this allowed?**
+Only download content you have the right to keep, and respect the rights of the people who shared it.
 
-### Submitting Pull Requests
+## Development
 
-1. **Fork the repository**: Click on the "Fork" button in the top-right of the repo.
-
-2. **Clone your fork**:
-
-    ```bash
-    git clone https://github.com/YOUR-USERNAME/Telegram-Media-Downloader.git
-    cd Telegram-Media-Downloader
-    ```
-
-3. **Create a new branch** for your feature or bugfix:
-
-    ```bash
-    git checkout -b feature-or-bugfix-name
-    ```
-
-    Make your changes and ensure the script still works correctly on supported Telegram webapps.
-
-4. **Make your changes** and ensure the script still works correctly on supported Telegram webapps.
-
-5. **Commit your changes** with a descriptive message:
-
-    ```bash
-    git commit -m "Add feature/fix issue: Brief description"
-    ```
-
-6. **Push to your fork:**
-
-    ```bash
-    git push origin feature-or-bugfix-name
-    ```
-
-7. **Submit a Pull Request (PR):**
-
-    - Go to the original repository: [Neet-Nestor/Telegram-Media-Downloader](https://github.com/Neet-Nestor/Telegram-Media-Downloader).
-
-    - Click "New Pull Request" and select your branch.
-
-    - Add a description of your changes and submit.
-
-### Development Guidelines
-- Keep your code clean and well-documented.
-- Follow the existing coding style.
-- Test your changes on both Telegram WebK and WebZ versions.
-- Ensure compatibility with major user script managers like Tampermonkey and Violentmonkey.
-
-### Automated Tests
-
-Use Node.js 22 or newer to run the regression tests:
+Requirements: Node.js 22 or newer.
 
 ```bash
 npm ci
-npx playwright-core install chromium
-npm run check
-npm test
+npx playwright-core install chromium   # or set TEL_TEST_BROWSER to a Chromium/Edge executable
+npm run check                          # syntax, manifest and locale checks
+npm test                               # browser tests with simulated Telegram pages
+npm run pack                           # builds dist/telegram-media-download-v<version>.zip
 ```
 
-To use an existing Chromium/Chrome installation, set `TEL_TEST_BROWSER` to its executable path instead of installing Chromium. Tests run in an isolated browser profile with simulated Telegram pages and network responses; no Telegram account is needed. The userscript itself has no npm runtime dependencies.
+Load the `extension/` folder with **Load unpacked** while developing. Branded Chrome 137+ ignores the `--load-extension` switch the tests use, so run the tests with Playwright's Chromium (the default) or Edge (`TEL_TEST_BROWSER`).
 
-GitHub Actions runs these checks on every push and pull request. Browser fixtures cover download behavior and known failure cases, while live `/a/` and `/k/` checks remain useful when Telegram changes its markup.
+- How the pieces fit together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- How to contribute, add a translation or cut a release: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+- Release notes: [CHANGELOG.md](CHANGELOG.md)
 
-### Help with Translations
-We want Telegram Media Downloader to be accessible to users worldwide! If you’d like to help translate the script’s Greasy Fork page, follow these steps:
+## Credits
 
-For the download UI, add the language's native name to `UI_LANGUAGES` and its messages to `UI_MESSAGES` in [`src/tel_download.js`](src/tel_download.js). Keep every English message key and its `{placeholders}`; add regional or script matching to `matchLanguage` if needed. Keep translations as plain text. Run `npm test` to check message coverage, placeholders, language switching, and download regressions. Missing messages fall back to English.
+- **Original author:** [Nestor Qin](https://github.com/Neet-Nestor), who wrote the [Telegram Media Downloader userscript](https://github.com/Neet-Nestor/Telegram-Media-Downloader) this extension is built on, including the download engine, viewer integration and the original translations. If the original script helped you, consider supporting the author through the links in the original repository.
+- **Extension (this fork):** [Thien21112005](https://github.com/Thien21112005), who turned the userscript into a Chrome extension and added the side panel, batch downloads, settings and the Vietnamese translation.
+- **Built with** [Claude](https://claude.com/claude-code) (Anthropic) as a coding collaborator.
 
-#### How to Contribute a Translation
+## License
 
-Check for existing translations in the [`docs/greasyfork`](/docs/greasyfork/) folder of the repository.
-
-Add a new file in docs/<language-code>.md, using the appropriate language code (e.g., docs/fr-FR.md for French, docs/de-DE.md for German).
-
-Translate the content from [`docs/greasyfork/en-US.md`](/docs/greasyfork/en-US.md) into your language while keeping the formatting intact. Submit a Pull Request following the steps in the [Submitting Pull Requests](#submitting-pull-requests) section above.
-
-#### Language Codes
-Use standard IETF Language Tag (e.g., `es-ES` for Spanish, `ja-JP` for Japanese). You can find a full list of codes [here](https://docs.dyspatch.io/localization/supported_languages/).
-
-## Support Author
-If you like this script, you can support me via [Venmo](https://venmo.com/u/NeetNestor) or [buy me a coffee](https://ko-fi.com/neetnestor) :)
+[GNU General Public License v3.0](./LICENSE), the same license as the original project. This is a modified version of the original work; the changes are listed in the [commit history](https://github.com/Thien21112005/telegram-media-download/commits/main) and [CHANGELOG.md](CHANGELOG.md).
