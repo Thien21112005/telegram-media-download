@@ -43,5 +43,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # 0.x versions are published as pre-releases (beta).
+          prerelease=""
+          case "$GITHUB_REF_NAME" in v0.*) prerelease="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" "dist/telegram-media-download-$GITHUB_REF_NAME.zip" \
-            --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+            --title "$GITHUB_REF_NAME" --notes-file release-notes.md $prerelease
