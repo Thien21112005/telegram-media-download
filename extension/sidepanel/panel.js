@@ -24,6 +24,7 @@
     filter: "all",
     anchor: null,       // last clicked tile, for shift-click ranges
     followMarker: true,
+    interrupted: 0,     // items of the last batch lost because the chat changed
   };
   const tiles = new Map(); // item id -> tile element (kept so previews never reload)
 
@@ -81,6 +82,11 @@
   };
   const loadSnapshot = (snapshot) => {
     if (snapshot.chat.key !== state.chat.key) {
+      // A batch that was still opening items cannot continue in another chat.
+      // Remember how many were lost; the tiles themselves are about to go.
+      const SAFE = new Set(["downloading", "saving", "completed", "handedOff"]);
+      const lost = Array.from(state.batch).filter((id) => !SAFE.has(state.tasks.get(id)?.state)).length;
+      if (lost) state.interrupted = lost;
       state.items.clear();
       state.tasks.clear();
       state.selected.clear();
@@ -240,6 +246,9 @@
 
     const showEmpty = !ready || state.items.size === 0;
     $("toolbar").hidden = !ready || state.items.size === 0;
+    $("notice").hidden = !state.interrupted;
+    $("notice").textContent = state.interrupted
+      ? t("batchInterrupted", { count: numberFormat.format(state.interrupted) }) : "";
     $("list").hidden = showEmpty;
     $("empty").hidden = !showEmpty;
     if (showEmpty) renderEmpty();
@@ -398,7 +407,8 @@
       state.tasks.set(id, { itemId: id, state: "queued", received: 0, total: null, error: "" });
     }
     state.selected.clear();
-    refreshSelectionViews();
+    state.interrupted = 0;
+    render();
     await send({ type: "scan:download", ids });
   };
   $("cancel").onclick = async () => {

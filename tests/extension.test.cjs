@@ -151,3 +151,27 @@ test('options page saves settings and credits the original author', async () => 
     await cleanup();
   }
 });
+
+test('side panel says how many items were lost when the chat closes mid-batch', async () => {
+  const { context, extensionId, cleanup } = await launchWithExtension();
+  try {
+    const page = await openTelegram(context, webK('https://web.telegram.org/media/'));
+    const panel = await context.newPage();
+    await panel.setViewportSize({ width: 360, height: 640 });
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html`);
+    const tabId = await panel.evaluate(async () => (await chrome.tabs.query({ url: 'https://web.telegram.org/*' }))[0].id);
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html?tab=${tabId}`);
+    await panel.locator('.tile').nth(2).waitFor();
+    assert.equal(await panel.locator('#notice').isVisible(), false);
+    await panel.locator('#select-all').click();
+    await panel.locator('#download').click();
+    await page.evaluate(() => closeChat());
+    await panel.locator('#notice').waitFor({ state: 'visible', timeout: 10000 });
+    assert.match(await panel.locator('#notice').textContent(), /download stopped because the chat changed\. [1-3] not downloaded/);
+    fs.mkdirSync(reviewDir, { recursive: true });
+    await panel.waitForTimeout(300);
+    await panel.screenshot({ path: path.join(reviewDir, 'sidepanel-interrupted.png') });
+  } finally {
+    await cleanup();
+  }
+});

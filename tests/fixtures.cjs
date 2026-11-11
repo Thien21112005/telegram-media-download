@@ -3,7 +3,7 @@ const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcS
 const photo = `<img class="media-photo" src="${pixel}" style="width:120px;height:90px;display:block">`;
 
 // Simulated WebK chat: clicking media opens a viewer with the full-size URL.
-const webK = (base = 'https://test.invalid/') => `
+const webK = (base = 'https://test.invalid/', { closeButton = true } = {}) => `
 <div class="chat-info"><span class="peer-title">Holiday photos</span></div>
 <div class="bubbles">
   <section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">12 August</div></div>
@@ -19,6 +19,7 @@ const webK = (base = 'https://test.invalid/') => `
 </div>
 <script>
   const BASE = ${JSON.stringify(base)};
+  const CLOSE_BUTTON = ${JSON.stringify(closeButton)};
   document.addEventListener('click', (event) => {
     const item = event.target.closest('.album-item[data-mid], .bubble[data-mid]');
     if (!item || document.querySelector('.media-viewer-whole')) return;
@@ -26,13 +27,33 @@ const webK = (base = 'https://test.invalid/') => `
     const isVideo = item.querySelector('.video-time');
     const viewer = document.createElement('div');
     viewer.className = 'media-viewer-whole';
-    viewer.innerHTML = '<div class="media-viewer-topbar"><div class="media-viewer-buttons"><button class="btn-icon tgico-close"></button></div></div>' +
+    viewer.innerHTML = '<div class="media-viewer-topbar"><div class="media-viewer-buttons">' +
+      '<button class="btn-icon hide" aria-label="Delete"><span class="tgico button-icon"></span></button>' +
+      '<button class="btn-icon quality-download-options-button-menu btn-menu-toggle hide" aria-label="Download"><span class="tgico button-icon"></span></button>' +
+      (CLOSE_BUTTON ? '<button class="btn-icon" aria-label="Zoom In"><span class="tgico button-icon"></span></button>' : '') +
+      '<div class="btn-icon btn-menu-toggle hide" role="button" aria-label="More"></div>' +
+      (CLOSE_BUTTON ? '<button class="btn-icon" aria-label="Close"><span class="tgico button-icon"></span></button>' : '') +
+      '</div></div>' +
       '<div class="media-viewer-movers"><div class="media-viewer-aspecter">' +
       (isVideo ? '<video src="' + BASE + 'clip-' + mid + '.mp4"></video>' : '<img class="thumbnail" src="' + BASE + 'full-' + mid + '.jpg">') +
       '</div></div>';
-    viewer.querySelector('.tgico-close').onclick = () => viewer.remove();
+    const close = viewer.querySelector('[aria-label="Close"]');
+    if (close) close.onclick = () => viewer.remove();
     document.body.appendChild(viewer);
   });
+  // Like Telegram: each Escape goes "back" once.
+  window.escapes = 0;
+  window.closeChat = () => {
+    document.querySelector('.bubbles').replaceChildren();
+    location.hash = '#closed';
+  };
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    window.escapes++;
+    const viewer = document.querySelector('.media-viewer-whole');
+    if (viewer) viewer.remove();
+    else window.closeChat();
+  }, true);
 </script>`;
 
 const webA = (base = 'https://test.invalid/') => `

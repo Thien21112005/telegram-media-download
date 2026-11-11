@@ -71,3 +71,42 @@ test('WebA media is listed and downloaded through its viewer', async () => {
   assert.deepEqual(await page.evaluate(() => saved.map(file => file.name).sort()), ['clip-31.mp4', 'full-30.jpg']);
   assert.equal(await page.evaluate(() => Boolean(document.querySelector('#MediaViewer'))), false);
 });
+
+// Regression: on live WebK the close button has no icon class, only an aria-label.
+// The old code fell back to two Escape presses; the second one closed the chat.
+test('WebK batch closes the viewer without closing the chat and downloads every item', async () => {
+  page = await openPage(browser, webK, '/k/');
+  await waitForItems(3);
+  await page.evaluate(() => TelScanner.download(['chat:10', 'chat:11', 'chat:12']));
+  await page.waitForFunction(() => saved.length === 3 || errors.length > 0, null, { timeout: 20000 });
+  const result = await page.evaluate(() => ({
+    names: saved.map(file => file.name).sort(),
+    escapes, hash: location.hash, bubbles: document.querySelectorAll('.bubble[data-mid]').length, errors,
+  }));
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.names, ['clip-12.mp4', 'full-10.jpg', 'full-11.jpg']);
+  assert.equal(result.escapes, 0, 'the close button is used, not Escape');
+  assert.equal(result.hash, '', 'the chat stays open');
+  assert.ok(result.bubbles > 0);
+});
+
+test('without a close button the viewer gets exactly one Escape per item and the chat stays open', async () => {
+  page = await openPage(browser, webKChat('https://test.invalid/', { closeButton: false }), '/k/');
+  await waitForItems(3);
+  await page.evaluate(() => TelScanner.download(['chat:10', 'chat:11', 'chat:12']));
+  await page.waitForFunction(() => saved.length === 3 || errors.length > 0, null, { timeout: 30000 });
+  const result = await page.evaluate(() => ({ saved: saved.length, escapes, hash: location.hash, errors }));
+  assert.deepEqual(result, { saved: 3, escapes: 3, hash: '', errors: [] });
+});
+
+test('items still waiting when the chat is closed fail with a clear reason', async () => {
+  page = await openPage(browser, webK, '/k/');
+  await waitForItems(3);
+  await page.evaluate(() => TelScanner.download(['chat:10', 'chat:11', 'chat:12']));
+  await page.waitForFunction(() => saved.length >= 1);
+  await page.evaluate(() => closeChat());
+  await page.waitForFunction(() => errors.some(error => /chat changed/.test(error)), null, { timeout: 20000 });
+  const result = await page.evaluate(() => ({ urls: requests.map(request => request.url), viewerOpen: Boolean(document.querySelector('.media-viewer-whole')) }));
+  assert.ok(!result.urls.some(url => url.includes('clip-12')), 'the last item is not downloaded from another chat');
+  assert.equal(result.viewerOpen, false);
+});

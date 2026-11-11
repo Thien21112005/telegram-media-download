@@ -20,10 +20,10 @@
     }
     return null;
   };
+  // Exactly one Escape. Telegram treats each one as "go back": a second one
+  // after the viewer has closed would close the chat itself.
   const pressEscape = () => {
-    for (const target of [document.activeElement || document.body, document]) {
-      target.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", keyCode: 27, bubbles: true }));
-    }
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", keyCode: 27, bubbles: true }));
   };
 
   // Each adapter knows one Telegram web version's markup.
@@ -53,10 +53,13 @@
       const image = media?.querySelector("img.thumbnail");
       return { video, image };
     },
-    close: (viewer) => {
-      const close = viewer.querySelector(".media-viewer-topbar .btn-icon.tgico-close, .media-viewer-topbar [class*='close']");
-      if (close) close.click();
-      else pressEscape();
+    // WebK marks its buttons with aria-labels, not icon classes. If the label
+    // is missing or translated, Close is still the last button of the toolbar.
+    closeButton: (viewer) => {
+      const bar = viewer.querySelector(".media-viewer-topbar .media-viewer-buttons");
+      if (!bar) return null;
+      const buttons = Array.from(bar.querySelectorAll("button.btn-icon:not(.hide):not(.btn-menu-toggle)"));
+      return bar.querySelector('button[aria-label="Close"], button.tgico-close') || buttons[buttons.length - 1] || null;
     },
   };
 
@@ -87,11 +90,8 @@
         image: media?.querySelector(".MediaViewerContent > div > img"),
       };
     },
-    close: (viewer) => {
-      const close = viewer.querySelector('button[aria-label="Close"], .MediaViewerActions button:last-child');
-      if (close) close.click();
-      else pressEscape();
-    },
+    closeButton: (viewer) =>
+      viewer.querySelector('button[aria-label="Close"], .MediaViewerActions button:last-child'),
   };
 
   const isWebK = location.hostname === "webk.telegram.org" || location.pathname.startsWith("/k/");
@@ -213,14 +213,26 @@
     scan();
   }
 
+  // Closes Telegram's media viewer and waits until it is gone. Escape is the
+  // fallback, sent once and only while a viewer is still open.
+  const closeViewer = async () => {
+    const viewer = adapter.viewer();
+    if (!viewer) return true;
+    const button = adapter.closeButton(viewer);
+    if (button) {
+      button.click();
+      if (await waitFor(() => !adapter.viewer(), 2500)) return true;
+    }
+    if (adapter.viewer()) pressEscape();
+    return Boolean(await waitFor(() => !adapter.viewer(), 2500));
+  };
+
   // Opens one item in Telegram's viewer and returns its full-size URL.
   const resolveSource = async (item) => {
     const element = adapter.find(item.mid);
     if (!element) throw Object.assign(new Error("Item is no longer in the chat view"), { translationKey: "errorNotInView" });
-    const before = adapter.viewer();
-    if (before) {
-      adapter.close(before);
-      await waitFor(() => !adapter.viewer(), 3000);
+    if (!await closeViewer()) {
+      throw Object.assign(new Error("Telegram's media viewer did not close"), { translationKey: "errorNoSource" });
     }
     element.scrollIntoView({ block: "center" });
     (element.querySelector("img, canvas, video") || element).click();
@@ -241,11 +253,7 @@
       if (video && !video.paused) video.pause();
       return performance.now() - stableSince >= 400 ? { url, kind: video && getMediaSource(video) === url ? "video" : "image" } : null;
     }, 20000);
-    const viewer = adapter.viewer();
-    if (viewer) {
-      adapter.close(viewer);
-      await waitFor(() => !adapter.viewer(), 3000);
-    }
+    await closeViewer();
     if (!source) throw Object.assign(new Error("Telegram did not open this media"), { translationKey: "errorNoSource" });
     return source;
   };
@@ -266,11 +274,16 @@
     resolving = true;
     try {
       while (resolveQueue.length) {
-        const item = resolveQueue.shift();
+        const { item, chat, folder } = resolveQueue.shift();
+        if (chat !== chatKey()) {
+          // The chat was closed or switched; its messages are no longer on the page.
+          reportFailure(item, Object.assign(new Error("The chat changed before this item was downloaded"), { translationKey: "errorChatChanged" }));
+          continue;
+        }
         postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "preparing", fileName: "", received: 0, total: null, error: "" } });
         try {
           const { url, kind } = await resolveSource(item);
-          downloadMedia(url, kind, { batch: true, itemId: item.id });
+          downloadMedia(url, kind, { batch: true, itemId: item.id, folder });
         } catch (error) {
           reportFailure(item, error);
         }
@@ -280,12 +293,15 @@
     }
   };
   const download = (ids) => {
-    const items = itemsFor(chatKey());
+    const chat = chatKey();
+    const items = itemsFor(chat);
+    // Fix the folder now, so files still go to this chat's folder if the chat changes later.
+    const folder = TelCore.resolveFolder();
     let accepted = 0;
     for (const id of Array.isArray(ids) ? ids : []) {
       const item = items.get(id);
-      if (!item || resolveQueue.includes(item)) continue;
-      resolveQueue.push(item);
+      if (!item || resolveQueue.some((entry) => entry.item === item)) continue;
+      resolveQueue.push({ item, chat, folder });
       accepted++;
     }
     pumpResolve();
@@ -302,7 +318,7 @@
   onExtensionMessage("scan:download", ({ ids }) => download(ids));
   onExtensionMessage("scan:cancel", () => {
     const dropped = resolveQueue.splice(0);
-    for (const item of dropped) {
+    for (const { item } of dropped) {
       postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "cancelled", fileName: "", received: 0, total: null, error: "" } });
     }
     return { cancelled: dropped.length };
