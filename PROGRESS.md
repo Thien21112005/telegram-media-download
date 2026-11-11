@@ -98,3 +98,12 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
   - [ ] `/a/`: lặp lại hai bước trên
   - [ ] Video > 1 GB, album nhiều ảnh, chat rất dài (cuộn xa rồi tải)
   - Nếu danh sách trống hoặc tải lỗi: mở DevTools ở tab Telegram, copy các dòng `[Tel Download]` và (nếu được) HTML của một bubble có ảnh để sửa selector trong `content/scanner.js`
+
+### 11/11/2026 – Lỗi đầu tiên từ test thật (v0.9.1)
+- Chủ repo test trên `/k/`: quét media chạy đúng (3 video hiện đủ), nhưng tải hàng loạt chỉ được mục đầu rồi nhóm chat bị đóng.
+- Nguyên nhân: nút đóng trình xem thật là `button.btn-icon[aria-label="Close"]`, không có class `tgico-close`; nhánh dự phòng gửi Escape hai lần nên đóng luôn chat.
+- [x] Tìm nút đóng theo aria-label hoặc vị trí cuối thanh công cụ; Escape chỉ gửi một lần khi trình xem còn mở
+- [x] Chat bị đóng/đổi giữa chừng: các mục còn lại báo lỗi rõ ràng, side panel hiện số mục chưa tải
+- [x] Fixture test dùng đúng HTML thanh công cụ lấy từ Telegram thật; test hồi quy thất bại với code cũ, đạt với code mới (54/54)
+- [ ] Chủ repo test lại trên Telegram thật với v0.9.1
+- Ghi nhận: detector báo 10 chỗ CSS side panel lệch với DESIGN.md (màu phủ mờ, vài bo góc, cỡ chữ 15px); có từ trước, chưa sửa.

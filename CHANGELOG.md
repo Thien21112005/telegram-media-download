@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-11
+
+### Fixed
+- Batch downloads on WebK stopped after the first item and closed the chat. The viewer's close button was not recognised, and the fallback pressed Escape twice; the second press closed the chat. The close button is now found by its label or position, and the fallback sends a single Escape only while the viewer is open.
+
+### Added
+- If the chat is closed or switched during a batch, the remaining items fail with a clear reason and the side panel says how many were not downloaded.
+
 ## [0.9.0] - 2026-11-10
 
 First release of the Chrome extension, published as a beta (pre-release) until it has been checked on live Telegram Web.

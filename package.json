@@ -1,6 +1,6 @@
 {
   "name": "telegram-media-download",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "description": "Chrome extension to download media from Telegram Web",
   "license": "GPL-3.0-only",
