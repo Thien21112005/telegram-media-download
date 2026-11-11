@@ -110,3 +110,27 @@ test('items still waiting when the chat is closed fail with a clear reason', asy
   assert.ok(!result.urls.some(url => url.includes('clip-12')), 'the last item is not downloaded from another chat');
   assert.equal(result.viewerOpen, false);
 });
+
+// Regression: live WebK shows a blurred placeholder first; the panel kept that blurry preview.
+test('a provisional preview is replaced once Telegram shows the sharp image', async () => {
+  const { webKLazy } = require('./fixtures.cjs');
+  page = await openPage(browser, webKLazy, '/k/');
+  await waitForItems(1);
+  // Average colour of a preview, to tell the red placeholder from the blue image.
+  const colour = () => page.evaluate(async () => {
+    const [item] = TelScanner.snapshot().items;
+    const image = new Image();
+    image.src = item.thumb;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, 1, 1);
+    const [r, , b] = context.getImageData(0, 0, 1, 1).data;
+    return { red: r > b, final: item.thumbFinal, kind: item.kind };
+  });
+  assert.deepEqual(await colour(), { red: true, final: false, kind: 'video' });
+  await page.evaluate(() => sharpen());
+  await page.waitForFunction(() => TelScanner.snapshot().items[0].thumbFinal === true);
+  assert.deepEqual(await colour(), { red: false, final: true, kind: 'video' });
+});

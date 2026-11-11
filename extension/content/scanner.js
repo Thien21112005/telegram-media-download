@@ -107,20 +107,40 @@
   };
 
   // A small preview drawn from what Telegram already shows; null if unavailable.
+  // Telegram first shows a tiny blurred placeholder and swaps in the real
+  // preview once it has loaded. A preview drawn from the placeholder is
+  // provisional (final: false) and is replaced when a sharp source appears.
   const THUMB_SIZE = 160;
+  const SHARP_MIN_SIZE = 64; // placeholders are about 40px on their longer side
+  const sourceSize = (source) => ({
+    width: source.naturalWidth || source.videoWidth || source.width || 0,
+    height: source.naturalHeight || source.videoHeight || source.height || 0,
+  });
+  const isDrawable = (source) => {
+    const { width, height } = sourceSize(source);
+    if (!width || !height) return false;
+    if (source.tagName === "IMG") return source.complete;
+    if (source.tagName === "VIDEO") return source.readyState >= 2;
+    return true;
+  };
+  const isSharp = (source) => {
+    if (source.tagName === "CANVAS" || source.matches('.thumbnail, [class*="blur"]')) return false;
+    const { width, height } = sourceSize(source);
+    return Math.max(width, height) >= SHARP_MIN_SIZE;
+  };
   const makeThumbnail = (element) => {
-    const source = element.querySelector("img.media-photo, img.thumbnail, img.full-media, img, canvas, video");
-    if (!source) return null;
-    const width = source.naturalWidth || source.videoWidth || source.width;
-    const height = source.naturalHeight || source.videoHeight || source.height;
-    if (!width || !height || (source.tagName === "IMG" && !source.complete)) return null;
+    const sources = Array.from(element.querySelectorAll("img, canvas, video")).filter(isDrawable);
+    if (!sources.length) return null;
+    const area = (source) => sourceSize(source).width * sourceSize(source).height;
+    const source = sources.sort((a, b) => isSharp(b) - isSharp(a) || area(b) - area(a))[0];
+    const { width, height } = sourceSize(source);
     try {
       const scale = Math.min(1, THUMB_SIZE / Math.max(width, height));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(width * scale));
       canvas.height = Math.max(1, Math.round(height * scale));
       canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", 0.7);
+      return { url: canvas.toDataURL("image/jpeg", 0.7), final: isSharp(source) };
     } catch {
       return null; // Cross-origin or not yet decoded.
     }
@@ -147,19 +167,45 @@
     const id = `${key}:${description.mid}`;
     const existing = items.get(id);
     if (existing) {
-      // Fill in a preview that was not decoded the first time.
-      if (!existing.thumb) {
-        existing.thumb = makeThumbnail(element);
-        if (existing.thumb) announce(existing);
-      }
+      refreshThumbnail(element, existing);
       return;
     }
-    const item = { id, mid: description.mid, kind: description.kind, day: description.day, duration: description.duration, thumb: makeThumbnail(element) };
+    const item = { id, mid: description.mid, kind: description.kind, day: description.day, duration: description.duration, thumb: null, thumbFinal: false };
     items.set(id, item);
-    announce(item);
-    if (!item.thumb) {
-      // Previews often finish decoding after the bubble scrolls in.
-      element.querySelector("img")?.addEventListener("load", () => record(element), { once: true });
+    if (!refreshThumbnail(element, item)) announce(item);
+  };
+
+  // Draws the preview again while it is missing or provisional. Returns true
+  // if the item was announced with a new preview.
+  const watchedImages = new WeakSet();
+  const refreshThumbnail = (element, item) => {
+    if (item.thumbFinal) return false;
+    const shot = makeThumbnail(element);
+    let changed = false;
+    if (shot && shot.url !== item.thumb) {
+      item.thumb = shot.url;
+      item.thumbFinal = shot.final;
+      announce(item);
+      changed = true;
+    }
+    if (!item.thumbFinal) {
+      // The sharp image may still be loading, or replace this one's source later.
+      for (const image of element.querySelectorAll("img")) {
+        if (watchedImages.has(image)) continue;
+        watchedImages.add(image);
+        image.addEventListener("load", () => record(element));
+      }
+    }
+    return changed;
+  };
+  // Telegram swaps placeholders for real previews after a bubble is on screen.
+  const refreshOnScreenThumbnails = () => {
+    const items = itemsFor(chatKey());
+    for (const id of onScreen) {
+      const item = items.get(id);
+      if (!item || item.thumbFinal) continue;
+      const element = adapter.find(item.mid);
+      if (element) refreshThumbnail(element, item);
     }
   };
 
@@ -194,6 +240,7 @@
       observed.add(element);
       visibility.observe(element);
     }
+    refreshOnScreenThumbnails();
   };
   let scanTimer;
   const scheduleScan = () => {

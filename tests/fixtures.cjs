@@ -77,4 +77,36 @@ const webA = (base = 'https://test.invalid/') => `
   });
 </script>`;
 
-module.exports = { pixel, photo, webK, webA };
+// WebK chat with one video whose preview loads late. Call sharpen() to swap the
+// red 40px placeholder canvas for the real (blue, 200x150) preview image.
+const webKLazy = `
+<div class="chat-info"><span class="peer-title">Lazy previews</span></div>
+<div class="bubbles"><section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">7 November</div></div>
+  <div class="bubble" data-mid="50"><div class="attachment" style="width:200px;height:150px">
+    <div class="album-item grouped-item" data-mid="50"><div class="album-item-media media-container">
+      <span class="video-time">0:59</span>
+      <canvas class="media-photo thumbnail" width="40" height="30" style="width:200px;height:150px;filter:blur(4px)"></canvas>
+    </div></div>
+  </div></div>
+</section></div>
+<script>
+  const placeholder = document.querySelector('canvas.thumbnail');
+  const context = placeholder.getContext('2d');
+  context.fillStyle = 'rgb(220, 30, 30)';
+  context.fillRect(0, 0, 40, 30);
+  window.sharpen = () => {
+    const full = document.createElement('canvas');
+    full.width = 200; full.height = 150;
+    const ctx = full.getContext('2d');
+    ctx.fillStyle = 'rgb(30, 60, 220)';
+    ctx.fillRect(0, 0, 200, 150);
+    const image = document.createElement('img');
+    image.className = 'media-photo';
+    image.decoding = 'async';
+    image.onload = () => placeholder.remove();
+    image.src = full.toDataURL('image/png');
+    placeholder.after(image);
+  };
+</script>`;
+
+module.exports = { pixel, photo, webK, webA, webKLazy };

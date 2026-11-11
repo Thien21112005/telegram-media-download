@@ -175,3 +175,23 @@ test('side panel says how many items were lost when the chat closes mid-batch', 
     await cleanup();
   }
 });
+
+test('side panel tile switches to the sharp preview when it arrives', async () => {
+  const { webKLazy } = require('./fixtures.cjs');
+  const { context, extensionId, cleanup } = await launchWithExtension();
+  try {
+    const page = await openTelegram(context, webKLazy);
+    const panel = await context.newPage();
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html`);
+    const tabId = await panel.evaluate(async () => (await chrome.tabs.query({ url: 'https://web.telegram.org/*' }))[0].id);
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html?tab=${tabId}`);
+    const tile = panel.locator('.tile').first();
+    await tile.waitFor();
+    await panel.waitForFunction(() => document.querySelector('.tile').style.backgroundImage !== '');
+    const blurry = await tile.evaluate(element => element.style.backgroundImage);
+    await page.evaluate(() => sharpen());
+    await panel.waitForFunction(before => document.querySelector('.tile').style.backgroundImage !== before, blurry, { timeout: 10000 });
+  } finally {
+    await cleanup();
+  }
+});

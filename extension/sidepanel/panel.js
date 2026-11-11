@@ -166,9 +166,10 @@
   };
   const updateTile = (tile, item) => {
     if (!item) return;
-    if (item.thumb && tile.dataset.thumb !== "1") {
+    // The preview can arrive later, or be replaced by a sharper one.
+    if (item.thumb && tile.shownThumb !== item.thumb) {
       tile.style.backgroundImage = `url("${item.thumb}")`;
-      tile.dataset.thumb = "1";
+      tile.shownThumb = item.thumb;
       tile.querySelector(".placeholder")?.remove();
     }
     const label = item.kind === "video" ? t("tileVideo", { duration: item.duration || "" }).trim() : t("tilePhoto");
