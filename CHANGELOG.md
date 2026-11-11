@@ -4,6 +4,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-11
+
+### Fixed
+- Side panel previews stayed blurry. Telegram shows a tiny blurred placeholder before the real preview; the extension captured the placeholder and never updated it. Previews are now redrawn when the sharp image appears, and the side panel replaces a tile's picture when a better one arrives.
+
 ## [0.9.1] - 2026-11-11
 
 ### Fixed

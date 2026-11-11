@@ -105,5 +105,13 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
 - [x] Tìm nút đóng theo aria-label hoặc vị trí cuối thanh công cụ; Escape chỉ gửi một lần khi trình xem còn mở
 - [x] Chat bị đóng/đổi giữa chừng: các mục còn lại báo lỗi rõ ràng, side panel hiện số mục chưa tải
 - [x] Fixture test dùng đúng HTML thanh công cụ lấy từ Telegram thật; test hồi quy thất bại với code cũ, đạt với code mới (54/54)
-- [ ] Chủ repo test lại trên Telegram thật với v0.9.1
+- [x] Chủ repo test lại trên Telegram thật với v0.9.1: tải đủ cả 3 video
 - Ghi nhận: detector báo 10 chỗ CSS side panel lệch với DESIGN.md (màu phủ mờ, vài bo góc, cỡ chữ 15px); có từ trước, chưa sửa.
+
+### 11/11/2026 – Thumbnail mờ (v0.9.2)
+- Chủ repo báo: thumbnail trong side panel mờ, trong khung chat thì rõ.
+- Nguyên nhân: Telegram hiện ảnh giữ chỗ bị làm mờ trước, rồi mới thay bằng `img.media-photo` rõ. Scanner chụp ảnh giữ chỗ và không chụp lại; side panel cũng chỉ nhận ảnh một lần cho mỗi ô.
+- [x] Scanner đánh dấu ảnh chụp "tạm" và chụp lại khi có ảnh rõ (theo thay đổi của trang và sự kiện tải ảnh)
+- [x] Side panel đổi ảnh của ô khi nhận ảnh mới
+- [x] Fixture có ảnh giữ chỗ rồi mới đổi sang ảnh rõ; 2 test hồi quy (56/56)
+- [ ] Chủ repo test lại trên Telegram thật với v0.9.2 (bản `/a/` chưa có HTML thật để đối chiếu)
