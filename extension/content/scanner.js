@@ -310,13 +310,69 @@
     return Boolean(await waitFor(() => !adapter.viewer(), 2500));
   };
 
+  // Telegram drops messages far from the reader's place from the page. To open
+  // such an item again, scroll the chat towards it until Telegram loads it back:
+  // newer ids lie below the loaded messages, older ids above. Gives up when the
+  // chat stops loading in that direction, when the id falls inside the loaded
+  // range but is missing (the message was deleted), or when time runs out.
+  const SEEK_STEP_WAIT = 1500;
+  const SEEK_MAX_STEPS = 60;
+  const SEEK_TIMEOUT = 90000;
+  const SEEK_STUCK_STEPS = 3;
+  const chatChanged = () => Object.assign(new Error("The chat changed before this item was downloaded"), { translationKey: "errorChatChanged" });
+  const notInView = () => Object.assign(new Error("Item is no longer in the chat view"), { translationKey: "errorNotInView" });
+  const sameRange = (a, b) => (a && b ? a.min === b.min && a.max === b.max : a === b);
+  const bringIntoView = async (item, { shouldStop = () => false } = {}) => {
+    let element = adapter.find(item.mid);
+    if (element) return element;
+    const target = Number(item.mid);
+    const started = performance.now();
+    let usedGoDown = false;
+    let stuck = 0;
+    let gapChecked = false;
+    for (let step = 0; step < SEEK_MAX_STEPS && performance.now() - started < SEEK_TIMEOUT; step++) {
+      if (shouldStop()) return null;
+      const range = adapter.loadedRange();
+      // Unknown order: look below first, where the newest messages are.
+      const down = !range || !Number.isFinite(target) || target > range.max;
+      if (range && Number.isFinite(target) && target >= range.min && target <= range.max) {
+        // Inside the loaded messages yet missing: allow one late render, then stop.
+        if (gapChecked) break;
+        gapChecked = true;
+      } else {
+        const scroller = adapter.scroller();
+        const goDown = down && !usedGoDown && adapter.goDownButton();
+        if (goDown) {
+          usedGoDown = true;
+          goDown.click();
+        } else if (scroller) {
+          const before = scroller.scrollTop;
+          scroller.scrollTop = down ? scroller.scrollHeight : 0;
+          // Already at that edge: no scroll event fires, so announce one for Telegram to load more.
+          if (scroller.scrollTop === before) {
+            (scroller === document.scrollingElement ? document : scroller).dispatchEvent(new Event("scroll"));
+          }
+        }
+      }
+      element = await waitFor(() => adapter.find(item.mid) || (!sameRange(adapter.loadedRange(), range) && "moved"), SEEK_STEP_WAIT);
+      if (element && element !== "moved") return element;
+      if (element === "moved") {
+        stuck = 0;
+      } else if (++stuck >= SEEK_STUCK_STEPS) {
+        break; // Telegram loads nothing more in this direction.
+      }
+    }
+    return adapter.find(item.mid);
+  };
+
   // Opens one item in Telegram's viewer and returns its full-size URL.
-  const resolveSource = async (item) => {
-    const element = adapter.find(item.mid);
-    if (!element) throw Object.assign(new Error("Item is no longer in the chat view"), { translationKey: "errorNotInView" });
+  const resolveSource = async (item, { shouldStop } = {}) => {
     if (!await closeViewer()) {
       throw Object.assign(new Error("Telegram's media viewer did not close"), { translationKey: "errorNoSource" });
     }
+    const element = await bringIntoView(item, { shouldStop });
+    if (!element && shouldStop?.()) throw chatChanged();
+    if (!element) throw notInView();
     element.scrollIntoView({ block: "center" });
     (element.querySelector("img, canvas, video") || element).click();
     let lastSource = "";
@@ -360,12 +416,12 @@
         const { item, chat, folder } = resolveQueue.shift();
         if (chat !== chatKey()) {
           // The chat was closed or switched; its messages are no longer on the page.
-          reportFailure(item, Object.assign(new Error("The chat changed before this item was downloaded"), { translationKey: "errorChatChanged" }));
+          reportFailure(item, chatChanged());
           continue;
         }
         postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "preparing", fileName: "", received: 0, total: null, error: "" } });
         try {
-          const { url, kind } = await resolveSource(item);
+          const { url, kind } = await resolveSource(item, { shouldStop: () => chat !== chatKey() });
           downloadMedia(url, kind, { batch: true, itemId: item.id, folder });
         } catch (error) {
           reportFailure(item, error);

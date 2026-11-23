@@ -109,4 +109,86 @@ const webKLazy = `
   };
 </script>`;
 
-module.exports = { pixel, photo, webK, webA, webKLazy };
+// WebK chat that, like Telegram, keeps only a window of messages in the page.
+// Messages 100–159 (100–129 on 20 November, 130–159 Today); the window opens
+// at the newest. Scrolling to an edge loads the next five messages after a
+// delay and drops five from the far end; the go-down button jumps to the
+// newest. deleteMessage(mid) removes a message from the chat's history.
+const webKVirtual = (base = 'https://test.invalid/') => `
+<div class="chat-info"><span class="peer-title">Long chat</span></div>
+<div id="column-center"><div class="bubbles">
+  <div class="scrollable scrollable-y" style="height:400px;overflow-y:auto"></div>
+  <button class="btn-circle btn-corner bubbles-go-down hide">↓</button>
+</div></div>
+<script>
+  const BASE = ${JSON.stringify(base)};
+  const PHOTO = ${JSON.stringify(photo)};
+  const WINDOW = 10, STEP = 5, DELAY = 150;
+  const history = Array.from({ length: 60 }, (_, i) => ({ mid: 100 + i, day: i < 30 ? '20 November' : 'Today' }));
+  const scroller = document.querySelector('.scrollable-y');
+  const goDown = document.querySelector('.bubbles-go-down');
+  let start = history.length - WINDOW;
+  let loading = false;
+  window.loads = 0;
+  const render = () => {
+    const shown = history.slice(start, start + WINDOW);
+    const days = [...new Set(shown.map(message => message.day))];
+    scroller.innerHTML = days.map(day => '<section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">' + day + '</div></div>' +
+      shown.filter(message => message.day === day).map(message =>
+        '<div class="bubble" data-mid="' + message.mid + '" style="height:150px"><div class="attachment">' + PHOTO + '</div></div>').join('') +
+      '</section>').join('');
+  };
+  const atBottom = () => start + WINDOW >= history.length;
+  const updateGoDown = () => goDown.classList.toggle('hide', atBottom() && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 5);
+  const load = (older) => {
+    if (loading) return;
+    const next = older ? Math.max(0, start - STEP) : Math.min(history.length - WINDOW, start + STEP);
+    if (next === start) return;
+    loading = true;
+    setTimeout(() => {
+      const anchor = scroller.querySelector('.bubble[data-mid="' + (older ? history[start].mid : history[start + WINDOW - 1].mid) + '"]');
+      const offset = anchor ? anchor.offsetTop - scroller.scrollTop : 0;
+      start = next;
+      render();
+      const kept = anchor && scroller.querySelector('.bubble[data-mid="' + anchor.dataset.mid + '"]');
+      if (kept) scroller.scrollTop = kept.offsetTop - offset;
+      loading = false;
+      loads++;
+      updateGoDown();
+    }, DELAY);
+  };
+  scroller.addEventListener('scroll', () => {
+    if (scroller.scrollTop <= 20) load(true);
+    else if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 20) load(false);
+    updateGoDown();
+  });
+  goDown.addEventListener('click', () => {
+    start = history.length - WINDOW;
+    render();
+    scroller.scrollTop = scroller.scrollHeight;
+    updateGoDown();
+  });
+  window.deleteMessage = (mid) => {
+    const index = history.findIndex(message => message.mid === mid);
+    if (index < 0) return;
+    history.splice(index, 1);
+    start = Math.min(start, history.length - WINDOW);
+    render();
+  };
+  window.scrollChat = (top) => { scroller.scrollTop = top === 'bottom' ? scroller.scrollHeight : top; };
+  render();
+  scroller.scrollTop = scroller.scrollHeight;
+  updateGoDown();
+  document.addEventListener('click', (event) => {
+    const item = event.target.closest('.bubble[data-mid]');
+    if (!item || document.querySelector('.media-viewer-whole')) return;
+    const viewer = document.createElement('div');
+    viewer.className = 'media-viewer-whole';
+    viewer.innerHTML = '<div class="media-viewer-topbar"><div class="media-viewer-buttons"><button class="btn-icon" aria-label="Close"></button></div></div>' +
+      '<div class="media-viewer-movers"><div class="media-viewer-aspecter"><img class="thumbnail" src="' + BASE + 'full-' + item.dataset.mid + '.jpg"></div></div>';
+    viewer.querySelector('[aria-label="Close"]').onclick = () => viewer.remove();
+    document.body.appendChild(viewer);
+  });
+</script>`;
+
+module.exports = { pixel, photo, webK, webA, webKLazy, webKVirtual };

@@ -188,3 +188,57 @@ test('WebA chat window: scroll container, go-down button and loaded message rang
   });
   assert.deepEqual(view, { scroller: true, hiddenButton: null, shownButton: true, loadedRange: { min: 30, max: 31 } });
 });
+
+// Plan 2026-11-23, step 2: items Telegram dropped from the page are scrolled back.
+const { webKVirtual } = require('./fixtures.cjs');
+// Scrolls the virtual chat until its oldest message (100) is loaded.
+const scrollToOldest = () => page.evaluate(async () => {
+  for (let i = 0; i < 60 && TelScanner.chatWindow().loadedRange.min > 100; i++) {
+    scrollChat(0);
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  return TelScanner.chatWindow().loadedRange;
+});
+
+test('after scrolling far up, today\'s items are scrolled back into view and downloaded', async () => {
+  page = await openPage(browser, webKVirtual(), '/k/');
+  await waitForItems(2);
+  const today = (await snapshot()).items.map(item => item.mid).filter(mid => mid >= 150).sort();
+  assert.ok(today.length >= 2, 'the newest items were listed');
+  assert.deepEqual(await scrollToOldest(), { min: 100, max: 109 });
+  assert.equal(await page.evaluate(() => document.querySelector('.bubble[data-mid="159"]')), null, 'today left the page');
+
+  await page.evaluate(ids => TelScanner.download(ids), today.map(mid => `chat:${mid}`));
+  await page.waitForFunction(n => saved.length === n || errors.length > 0, today.length, { timeout: 60000 });
+  const result = await page.evaluate(() => ({ names: saved.map(file => file.name).sort(), errors, viewerOpen: Boolean(document.querySelector('.media-viewer-whole')) }));
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.names, today.map(mid => `full-${mid}.jpg`));
+  assert.equal(result.viewerOpen, false);
+});
+
+test('an old item is scrolled back to after the chat returned to the newest messages', async () => {
+  page = await openPage(browser, webKVirtual(), '/k/');
+  await scrollToOldest();
+  await page.evaluate(() => scrollChat(0)); // bring message 100 itself on screen
+  await page.waitForFunction(() => TelScanner.snapshot().items.some(item => item.mid === '100'));
+  await page.evaluate(() => document.querySelector('.bubbles-go-down').click());
+  await page.waitForFunction(() => TelScanner.chatWindow().loadedRange.max === 159);
+
+  await page.evaluate(() => TelScanner.download(['chat:100']));
+  await page.waitForFunction(() => saved.length === 1 || errors.length > 0, null, { timeout: 60000 });
+  assert.deepEqual(await page.evaluate(() => ({ names: saved.map(file => file.name), errors })), { names: ['full-100.jpg'], errors: [] });
+});
+
+test('a listed item deleted from the chat fails without searching forever', async () => {
+  page = await openPage(browser, webKVirtual(), '/k/');
+  await waitForItems(2);
+  const [mid] = (await snapshot()).items.map(item => item.mid);
+  await scrollToOldest();
+  await page.evaluate(id => deleteMessage(Number(id)), mid);
+  const started = Date.now();
+  await page.evaluate(id => TelScanner.download([`chat:${id}`]), mid);
+  await page.waitForFunction(() => errors.length > 0, null, { timeout: 60000 });
+  assert.match((await page.evaluate(() => errors))[0], /no longer in the chat view/);
+  assert.equal(await page.evaluate(() => requests.length), 0);
+  assert.ok(Date.now() - started < 30000, 'gives up well before the time limit');
+});
