@@ -173,7 +173,9 @@ Cài đặt của bạn vẫn được giữ nguyên sau khi cập nhật.
 | Panel báo **"Tải lại tab Telegram để kết nối"** | Tab Telegram được mở trước khi cài hoặc cập nhật extension. Bấm **Tải lại tab** |
 | Panel báo **"Mở một cuộc trò chuyện để bắt đầu"** | Chọn một chat ở danh sách bên trái Telegram |
 | Cuộn mãi mà panel **vẫn trống** | Kiểm tra chat có ảnh/video không. Thử tải lại tab Telegram. Nếu vẫn trống thì có thể Telegram đã đổi giao diện, hãy [báo lỗi](#10-báo-lỗi) |
-| Ô báo lỗi **"Hãy cuộn chat lại tới mục này rồi thử lại"** | Telegram đã gỡ tin nhắn đó vì nó ở quá xa màn hình. Cuộn chat lại tới chỗ đó rồi tải lại |
+| Ô hiện **"Đang tìm trong chat"** và chat tự cuộn | Bình thường: mục đó ở quá xa nên Telegram đã gỡ khỏi trang, extension đang cuộn chat về đó. Cứ để tab Telegram mở, không cần làm gì. Muốn dừng thì bấm **Huỷ** |
+| Ô báo lỗi **"Không cuộn tới được mục này"** | Mục ở quá xa hoặc Telegram nạp quá chậm. Cuộn chat lại gần mục đó rồi tải lại |
+| Ô báo lỗi **"Mục này không còn trong chat, có thể đã bị xoá"** | Tin nhắn đã bị xoá sau khi panel ghi nhận nó. Bấm **Xoá danh sách** rồi cuộn lại để làm mới |
 | Ô báo lỗi **"Telegram không mở được media này"** | Media chưa tải xong phía Telegram, hoặc mạng chậm. Đợi một chút rồi tải lại |
 | Lỗi **"Không nhận được dữ liệu trong 30 giây"** | Mạng bị gián đoạn. Bấm **Thử lại** |
 | Chrome **chặn tải nhiều file** | Bấm icon 🚫 ở thanh địa chỉ, chọn **Luôn cho phép web.telegram.org tải nhiều tệp** |

@@ -99,7 +99,7 @@ Cài đặt được đồng bộ theo hồ sơ Chrome và áp dụng ngay cho c
 - **Video lớn tốn bộ nhớ.** Khi không có hộp thoại lưu, trình duyệt phải gom đủ cả file rồi mới lưu.
 - **Side panel chỉ liệt kê ảnh và video.** Chưa liệt kê file, nhạc và tin nhắn thoại. Tin nhắn thoại tải được từ thanh audio ghim ở bản `/k/`.
 - **Telegram có thể thay đổi trang.** Extension đọc cấu trúc trang của Telegram Web. Nếu Telegram thay đổi, nút tải có thể biến mất hoặc panel không hiện gì. Hãy [mở issue](https://github.com/Thien21112005/telegram-media-download/issues) kèm phiên bản Telegram bạn dùng (`/k/` hay `/a/`).
-- **Chat dài.** Telegram gỡ những tin nhắn ở quá xa màn hình. Nếu một mục đã bị cuộn đi quá xa, panel sẽ nhắc bạn cuộn lại tới đó rồi mới tải.
+- **Chat dài.** Telegram gỡ những tin nhắn ở quá xa màn hình. Khi bạn tải một mục đã bị cuộn đi xa, extension sẽ tự cuộn chat về mục đó trước (ô hiện *Đang tìm trong chat*), nên sau khi tải chat có thể nằm ở chỗ khác chỗ bạn đang xem. Mục càng xa thì càng lâu; nếu không cuộn tới được, hãy cuộn chat lại gần nó rồi thử lại.
 
 ## Câu hỏi thường gặp
 

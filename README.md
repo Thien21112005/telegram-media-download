@@ -101,7 +101,7 @@ Settings sync across your Chrome profile and apply to open Telegram tabs immedia
 - **Large videos use memory.** Without a save dialog, the browser collects the whole file before saving it.
 - **The side panel lists photos and videos.** Files, music and voice messages are not listed yet; download voice messages from the pinned audio bar in `/k/`.
 - **Telegram may change its page.** The extension reads Telegram Web's page structure. If Telegram changes it, buttons may disappear or the panel may stay empty. Please [open an issue](https://github.com/Thien21112005/telegram-media-download/issues) with your Telegram version (`/k/` or `/a/`).
-- **Long chats.** Telegram removes messages far from the screen. If an item scrolled far away, the panel asks you to scroll back to it before downloading.
+- **Long chats.** Telegram removes messages far from the screen. When you download an item that scrolled far away, the extension scrolls the chat back to it first (its tile says *Finding in chat*), so the chat may end up at a different place than where you left it. Very distant items can take a while; if one cannot be reached, scroll closer to it and try again.
 
 ## FAQ
 
