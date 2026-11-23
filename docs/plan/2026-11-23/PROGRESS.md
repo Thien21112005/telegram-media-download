@@ -9,12 +9,12 @@ Kế hoạch: [PLAN.md](PLAN.md)
 | 0 | Tái hiện, tìm nguyên nhân, viết plan | ✅ |
 | 1 | Adapter: khung cuộn, nút xuống cuối, khoảng `mid` đang có | ✅ |
 | 2 | `bringIntoView()` + gọi trong `resolveSource()` | ✅ |
-| 3 | Huỷ được khi đang cuộn | ⬜ |
-| 4 | Sắp hàng đợi theo `mid` | ⬜ |
-| 5 | Trạng thái "Đang tìm trong chat…" trên side panel | ⬜ |
-| 6 | Nội dung lỗi mới, dịch 6 ngôn ngữ | ⬜ |
-| 7 | Fixture "cửa sổ ảo" WebK + WebA | 🟨 WebK xong, còn WebA |
-| 8 | Test hồi quy (cuộn xa, mục bị xoá, huỷ, sửa test cũ) | 🟨 cuộn xa + mục bị xoá xong (WebK) |
+| 3 | Huỷ được khi đang cuộn | ✅ |
+| 4 | Sắp hàng đợi theo `mid` | ✅ (mục trong trang trước, rồi mục gần nhất) |
+| 5 | Trạng thái "Đang tìm trong chat…" trên side panel | ✅ |
+| 6 | Nội dung lỗi mới, dịch 6 ngôn ngữ | ✅ |
+| 7 | Fixture "cửa sổ ảo" WebK + WebA | ✅ |
+| 8 | Test hồi quy (cuộn xa, mục bị xoá, huỷ, sửa test cũ) | ✅ 66/66 |
 | 9 | README, CHANGELOG, bump v0.9.3 | ⬜ |
 | 10 | Chủ repo test trên Telegram thật | ⬜ |
 
@@ -41,4 +41,14 @@ Kế hoạch: [PLAN.md](PLAN.md)
   - 3 test mới: cuộn lên xa rồi tải mục hôm nay; về cuối rồi tải mục cũ nhất; mục đã bị xoá báo lỗi trong vài giây. Scanner 13/13
   - Test thứ nhất **fail với code cũ** (đúng lỗi chủ repo gặp), pass với code mới
   - Test cũ "items that left the chat view report an error" vẫn đúng, nhưng giờ mất ~5 s vì thử cuộn trước khi bỏ cuộc
-- [ ] Việc 3: huỷ được khi đang cuộn
+- [x] Việc 3: bấm Huỷ dừng cả mục đang được tìm/mở (không chỉ các mục đang chờ)
+  - Scanner giữ mục đang xử lý (`current`); `scan:cancel` đánh dấu huỷ, vòng cuộn và lúc chờ trình xem đều kiểm tra mỗi 100 ms
+  - Mục bị huỷ báo trạng thái `cancelled`, không phải `failed`; `scan:clear` cũng huỷ như vậy
+- [x] Việc 4: thay vì sắp cố định theo `mid`, mỗi lần lấy mục tiếp theo theo vị trí hiện tại: mục đang có trong trang trước, rồi tới mục gần khoảng tin đang có nhất. Chat cuộn một chiều, không nhảy qua lại
+- [x] Việc 5: scanner gửi trạng thái `seeking` khi phải cuộn tìm. Ô trên side panel hiện chữ "Đang tìm trong chat", dòng ghi chú dưới thanh tiến độ đổi thành "Đang cuộn chat để tìm các mục ở xa…"
+- [x] Việc 6: 6 ngôn ngữ có `seeking`, `seekingNote`, `errorSeekTimeout`; `errorNotInView` đổi thành "Mục này không còn trong chat, có thể đã bị xoá."
+  - Tìm không thấy mà mã tin nằm trong khoảng đang có → `errorNotInView` (đã bị xoá); nằm ngoài (cuộn không tới) → `errorSeekTimeout`
+- [x] Việc 7: fixture `virtualChat('k' | 'a')` dùng chung một logic cho WebK và WebA (`webKVirtual`, `webAVirtual`)
+- [x] Việc 8: test cuộn xa / quay về cuối chạy cho cả WebK và WebA; thêm test trạng thái `seeking`, huỷ khi đang cuộn, thứ tự mở; test side panel hiện "Finding in chat" (chụp `.impeccable/review/sidepanel-seeking.png`)
+  - Toàn bộ **66/66** đạt khi chạy bằng Chromium của Playwright (`TEL_TEST_BROWSER=…/ms-playwright/chromium-1254/chrome-win64/chrome.exe`). 7 test nạp extension lỗi ở việc 1 là do dùng Chrome thường, không phải lỗi code
+- [ ] Việc 9: README, CHANGELOG, v0.9.3

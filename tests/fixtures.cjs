@@ -109,48 +109,101 @@ const webKLazy = `
   };
 </script>`;
 
-// WebK chat that, like Telegram, keeps only a window of messages in the page.
+// A chat that, like Telegram, keeps only a window of messages in the page.
 // Messages 100–159 (100–129 on 20 November, 130–159 Today); the window opens
 // at the newest. Scrolling to an edge loads the next five messages after a
 // delay and drops five from the far end; the go-down button jumps to the
 // newest. deleteMessage(mid) removes a message from the chat's history.
-const webKVirtual = (base = 'https://test.invalid/') => `
-<div class="chat-info"><span class="peer-title">Long chat</span></div>
+// The flavor picks WebK or WebA markup; the behaviour is the same.
+const VIRTUAL_FLAVORS = {
+  k: {
+    shell: `<div class="chat-info"><span class="peer-title">Long chat</span></div>
 <div id="column-center"><div class="bubbles">
   <div class="scrollable scrollable-y" style="height:400px;overflow-y:auto"></div>
   <button class="btn-circle btn-corner bubbles-go-down hide">↓</button>
-</div></div>
+</div></div>`,
+    scroller: '.scrollable-y',
+    goDown: '.bubbles-go-down',
+    showGoDown: (button, show) => button.classList.toggle('hide', !show),
+    group: (day, body) => '<section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">' + day + '</div></div>' + body + '</section>',
+    message: (mid, photo) => '<div class="bubble" data-mid="' + mid + '" style="height:150px"><div class="attachment">' + photo + '</div></div>',
+    messageSelector: (mid) => '.bubble[data-mid="' + mid + '"]',
+    clickTarget: '.bubble[data-mid]',
+    midOf: (element) => element.dataset.mid,
+    viewer: (src) => {
+      const viewer = document.createElement('div');
+      viewer.className = 'media-viewer-whole';
+      viewer.innerHTML = '<div class="media-viewer-topbar"><div class="media-viewer-buttons"><button class="btn-icon" aria-label="Close"></button></div></div>' +
+        '<div class="media-viewer-movers"><div class="media-viewer-aspecter"><img class="thumbnail" src="' + src + '"></div></div>';
+      return viewer;
+    },
+    viewerSelector: '.media-viewer-whole',
+  },
+  a: {
+    shell: `<div class="MiddleHeader"><div class="ChatInfo"><div class="fullName">Long chat</div></div></div>
+<div class="MiddleColumn">
+  <div class="MessageList custom-scroll" style="height:400px;overflow-y:auto"></div>
+  <div class="FloatingActionButtons"><div class="ScrollDownButton"><button aria-label="Go to bottom">↓</button></div></div>
+</div>`,
+    scroller: '.MessageList',
+    goDown: '.ScrollDownButton button',
+    showGoDown: (button, show) => button.closest('.FloatingActionButtons').classList.toggle('revealed', show),
+    group: (day, body) => '<div class="message-date-group"><div class="sticky-date"><span>' + day + '</span></div>' + body + '</div>',
+    message: (mid, photo) => '<div class="message-list-item" id="message-' + mid + '" data-message-id="' + mid + '" style="height:150px"><div class="media-inner">' + photo + '</div></div>',
+    messageSelector: (mid) => '#message-' + mid,
+    clickTarget: '.message-list-item',
+    midOf: (element) => element.dataset.messageId,
+    viewer: (src) => {
+      const viewer = document.createElement('div');
+      viewer.id = 'MediaViewer';
+      viewer.innerHTML = '<div class="MediaViewerActions"><button aria-label="Close"></button></div>' +
+        '<div class="MediaViewerSlide MediaViewerSlide--active"><div class="MediaViewerContent"><div><img src="' + src + '"></div></div></div>';
+      return viewer;
+    },
+    viewerSelector: '#MediaViewer',
+  },
+};
+
+const virtualChat = (flavor, base = 'https://test.invalid/') => {
+  const f = VIRTUAL_FLAVORS[flavor];
+  const fn = (value) => value.toString();
+  return `${f.shell}
 <script>
   const BASE = ${JSON.stringify(base)};
   const PHOTO = ${JSON.stringify(photo)};
+  const F = {
+    scroller: ${JSON.stringify(f.scroller)}, goDown: ${JSON.stringify(f.goDown)},
+    clickTarget: ${JSON.stringify(f.clickTarget)}, viewerSelector: ${JSON.stringify(f.viewerSelector)},
+    showGoDown: ${fn(f.showGoDown)}, group: ${fn(f.group)}, message: ${fn(f.message)},
+    messageSelector: ${fn(f.messageSelector)}, midOf: ${fn(f.midOf)}, viewer: ${fn(f.viewer)},
+  };
   const WINDOW = 10, STEP = 5, DELAY = 150;
   const history = Array.from({ length: 60 }, (_, i) => ({ mid: 100 + i, day: i < 30 ? '20 November' : 'Today' }));
-  const scroller = document.querySelector('.scrollable-y');
-  const goDown = document.querySelector('.bubbles-go-down');
+  const scroller = document.querySelector(F.scroller);
+  const goDown = document.querySelector(F.goDown);
   let start = history.length - WINDOW;
   let loading = false;
   window.loads = 0;
   const render = () => {
     const shown = history.slice(start, start + WINDOW);
     const days = [...new Set(shown.map(message => message.day))];
-    scroller.innerHTML = days.map(day => '<section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">' + day + '</div></div>' +
-      shown.filter(message => message.day === day).map(message =>
-        '<div class="bubble" data-mid="' + message.mid + '" style="height:150px"><div class="attachment">' + PHOTO + '</div></div>').join('') +
-      '</section>').join('');
+    scroller.innerHTML = days.map(day => F.group(day,
+      shown.filter(message => message.day === day).map(message => F.message(message.mid, PHOTO)).join(''))).join('');
   };
-  const atBottom = () => start + WINDOW >= history.length;
-  const updateGoDown = () => goDown.classList.toggle('hide', atBottom() && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 5);
+  const atNewest = () => start + WINDOW >= history.length && scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 5;
+  const updateGoDown = () => F.showGoDown(goDown, !atNewest());
   const load = (older) => {
     if (loading) return;
     const next = older ? Math.max(0, start - STEP) : Math.min(history.length - WINDOW, start + STEP);
     if (next === start) return;
     loading = true;
     setTimeout(() => {
-      const anchor = scroller.querySelector('.bubble[data-mid="' + (older ? history[start].mid : history[start + WINDOW - 1].mid) + '"]');
+      const anchorMid = older ? history[start].mid : history[start + WINDOW - 1].mid;
+      const anchor = scroller.querySelector(F.messageSelector(anchorMid));
       const offset = anchor ? anchor.offsetTop - scroller.scrollTop : 0;
       start = next;
       render();
-      const kept = anchor && scroller.querySelector('.bubble[data-mid="' + anchor.dataset.mid + '"]');
+      const kept = scroller.querySelector(F.messageSelector(anchorMid));
       if (kept) scroller.scrollTop = kept.offsetTop - offset;
       loading = false;
       loads++;
@@ -180,15 +233,15 @@ const webKVirtual = (base = 'https://test.invalid/') => `
   scroller.scrollTop = scroller.scrollHeight;
   updateGoDown();
   document.addEventListener('click', (event) => {
-    const item = event.target.closest('.bubble[data-mid]');
-    if (!item || document.querySelector('.media-viewer-whole')) return;
-    const viewer = document.createElement('div');
-    viewer.className = 'media-viewer-whole';
-    viewer.innerHTML = '<div class="media-viewer-topbar"><div class="media-viewer-buttons"><button class="btn-icon" aria-label="Close"></button></div></div>' +
-      '<div class="media-viewer-movers"><div class="media-viewer-aspecter"><img class="thumbnail" src="' + BASE + 'full-' + item.dataset.mid + '.jpg"></div></div>';
+    const item = event.target.closest(F.clickTarget);
+    if (!item || document.querySelector(F.viewerSelector)) return;
+    const viewer = F.viewer(BASE + 'full-' + F.midOf(item) + '.jpg');
     viewer.querySelector('[aria-label="Close"]').onclick = () => viewer.remove();
     document.body.appendChild(viewer);
   });
 </script>`;
+};
+const webKVirtual = (base) => virtualChat('k', base);
+const webAVirtual = (base) => virtualChat('a', base);
 
-module.exports = { pixel, photo, webK, webA, webKLazy, webKVirtual };
+module.exports = { pixel, photo, webK, webA, webKLazy, webKVirtual, webAVirtual };

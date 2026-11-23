@@ -195,3 +195,40 @@ test('side panel tile switches to the sharp preview when it arrives', async () =
     await cleanup();
   }
 });
+
+// Plan 2026-11-23: a far-away item says it is being searched for, then downloads.
+test('side panel shows a far-away item being searched for in the chat, then saves it', async () => {
+  const { webKVirtual } = require('./fixtures.cjs');
+  const { context, extensionId, cleanup } = await launchWithExtension();
+  try {
+    const page = await openTelegram(context, webKVirtual('https://web.telegram.org/media/'));
+    const panel = await context.newPage();
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html`);
+    const tabId = await panel.evaluate(async () => (await chrome.tabs.query({ url: 'https://web.telegram.org/*' }))[0].id);
+    await panel.goto(`chrome-extension://${extensionId}/sidepanel/index.html?tab=${tabId}`);
+    await panel.locator('.tile').first().waitFor();
+    const id = await panel.locator('.tile').last().getAttribute('data-id');
+
+    // Scroll the chat far up so the newest item leaves the page.
+    await page.evaluate(async () => {
+      for (let i = 0; i < 60 && !document.querySelector('.bubble[data-mid="100"]'); i++) {
+        scrollChat(0);
+        await new Promise(resolve => setTimeout(resolve, 250));
+      }
+    });
+    await page.evaluate(() => document.querySelector('.bubbles-go-down').classList.add('hide')); // force a scroll, not a jump
+    await panel.locator(`.tile[data-id="${id}"]`).click();
+    await panel.locator('#download').click();
+    const tile = panel.locator(`.tile[data-id="${id}"]`);
+    await panel.waitForFunction(tileId => document.querySelector(`.tile[data-id="${tileId}"]`).dataset.state === 'seeking', id, { timeout: 10000 });
+    assert.equal(await tile.locator('.state .label').textContent(), 'Finding in chat');
+    assert.match(await tile.getAttribute('aria-label'), /Finding in chat/);
+    assert.match(await panel.locator('#bar-note').textContent(), /Scrolling the chat/);
+    await panel.setViewportSize({ width: 360, height: 640 });
+    await tile.scrollIntoViewIfNeeded();
+    await panel.screenshot({ path: path.join(reviewDir, 'sidepanel-seeking.png') });
+    await panel.waitForFunction(tileId => document.querySelector(`.tile[data-id="${tileId}"]`).dataset.state === 'handedOff', id, { timeout: 60000 });
+  } finally {
+    await cleanup();
+  }
+});
