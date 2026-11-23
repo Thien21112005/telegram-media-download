@@ -4,15 +4,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-### Fixed
-- Side panel previews looked pixelated, especially screenshots with text. Previews were at most 160 pixels on their longer side, so a wide image was stretched to fill the square tile. They are now the 256-pixel centre square, scaled down at high quality.
-- In long chats, more and more side panel tiles stayed blurry or empty. Previews were only redrawn while the item was on screen, but Telegram often swaps in the sharp image after you have scrolled past. Every item still waiting for a sharp preview is now redrawn when its image changes, on screen or not.
-
 ## [0.9.3] - 2026-11-23
 
 ### Fixed
 - Items listed in the side panel failed with "Scroll back to this item" after the chat was scrolled far away (for example, today's media after scrolling far up). Telegram removes distant messages from the page; the extension now scrolls the chat back to each item before opening it.
 - Cancel now also stops the item being opened, not only the ones still waiting.
+- Side panel previews looked pixelated, especially screenshots with text. Previews were at most 160 pixels on their longer side, so a wide image was stretched to fill the square tile. They are now the 256-pixel centre square, scaled down at high quality.
+- In long chats, more and more side panel tiles stayed blurry or empty. Previews were only redrawn while the item was on screen, but Telegram often swaps in the sharp image after you have scrolled past. Every item still waiting for a sharp preview is now redrawn when its image changes, on screen or not.
 
 ### Changed
 - Items already in the page are downloaded first, then the nearest far-away ones, so the chat scrolls in one direction.
