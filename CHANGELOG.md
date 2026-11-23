@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-23
+
+### Fixed
+- Items listed in the side panel failed with "Scroll back to this item" after the chat was scrolled far away (for example, today's media after scrolling far up). Telegram removes distant messages from the page; the extension now scrolls the chat back to each item before opening it.
+- Cancel now also stops the item being opened, not only the ones still waiting.
+
+### Changed
+- Items already in the page are downloaded first, then the nearest far-away ones, so the chat scrolls in one direction.
+- A tile shows *Finding in chat* while the chat scrolls to it. A missing item now says whether it was deleted or could not be reached.
+
 ## [0.9.2] - 2026-11-11
 
 ### Fixed

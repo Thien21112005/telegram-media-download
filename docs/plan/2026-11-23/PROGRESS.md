@@ -14,9 +14,9 @@ Kế hoạch: [PLAN.md](PLAN.md)
 | 5 | Trạng thái "Đang tìm trong chat…" trên side panel | ✅ |
 | 6 | Nội dung lỗi mới, dịch 6 ngôn ngữ | ✅ |
 | 7 | Fixture "cửa sổ ảo" WebK + WebA | ✅ |
-| 8 | Test hồi quy (cuộn xa, mục bị xoá, huỷ, sửa test cũ) | ✅ 66/66 |
-| 9 | README, CHANGELOG, bump v0.9.3 | ⬜ |
-| 10 | Chủ repo test trên Telegram thật | ⬜ |
+| 8 | Test hồi quy (cuộn xa, mục bị xoá, huỷ, sửa test cũ) | ✅ 67/67 |
+| 9 | README, CHANGELOG, bump v0.9.3 | ✅ (chưa tag, chưa push) |
+| 10 | Chủ repo test trên Telegram thật | 🟨 chờ chủ repo |
 
 ---
 
@@ -50,5 +50,12 @@ Kế hoạch: [PLAN.md](PLAN.md)
   - Tìm không thấy mà mã tin nằm trong khoảng đang có → `errorNotInView` (đã bị xoá); nằm ngoài (cuộn không tới) → `errorSeekTimeout`
 - [x] Việc 7: fixture `virtualChat('k' | 'a')` dùng chung một logic cho WebK và WebA (`webKVirtual`, `webAVirtual`)
 - [x] Việc 8: test cuộn xa / quay về cuối chạy cho cả WebK và WebA; thêm test trạng thái `seeking`, huỷ khi đang cuộn, thứ tự mở; test side panel hiện "Finding in chat" (chụp `.impeccable/review/sidepanel-seeking.png`)
-  - Toàn bộ **66/66** đạt khi chạy bằng Chromium của Playwright (`TEL_TEST_BROWSER=…/ms-playwright/chromium-1254/chrome-win64/chrome.exe`). 7 test nạp extension lỗi ở việc 1 là do dùng Chrome thường, không phải lỗi code
-- [ ] Việc 9: README, CHANGELOG, v0.9.3
+  - Toàn bộ **67/67** đạt khi chạy bằng Chromium của Playwright (`TEL_TEST_BROWSER=…/ms-playwright/chromium-1254/chrome-win64/chrome.exe`). 7 test nạp extension lỗi ở việc 1 là do dùng Chrome thường, không phải lỗi code
+- [x] Việc 9: README (EN/VI), HUONG-DAN-SU-DUNG (bảng xử lý sự cố), ARCHITECTURE, CHANGELOG 0.9.3; version 0.9.3 trong `manifest.json`, `package.json`, `package-lock.json`
+  - Chưa tạo tag `v0.9.3` và chưa push: chờ chủ repo đồng ý (tag `v*` sẽ tự phát hành trên GitHub)
+- [ ] Việc 10: chủ repo test trên Telegram thật (nạp lại extension từ thư mục `extension/` hoặc bản zip sau khi phát hành)
+  - [ ] `/k/`: cuộn một chat dài lên thật xa, chọn media hôm nay, bấm Tải → ô hiện "Đang tìm trong chat", chat tự cuộn xuống, file tải về đủ
+  - [ ] `/k/`: về cuối chat, chọn một mục cũ đã ghi nhận lúc trước, bấm Tải → chat tự cuộn lên tới mục đó
+  - [ ] Bấm **Huỷ** khi chat đang tự cuộn → dừng ngay, ô hiện đã huỷ
+  - [ ] `/a/`: lặp lại hai bước đầu
+  - [ ] Nếu chat không tự cuộn hoặc báo "Không cuộn tới được mục này": mở DevTools ở tab Telegram, copy HTML của khung chat (phần chứa các bubble) và nút mũi tên "xuống cuối" để chỉnh selector `scroller` / `goDownButton` trong `content/scanner.js`

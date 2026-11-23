@@ -116,5 +116,9 @@ Kế hoạch chi tiết: [docs/plan/2026-11-10/PLAN.md](docs/plan/2026-11-10/PLA
 - [x] Fixture có ảnh giữ chỗ rồi mới đổi sang ảnh rõ; 2 test hồi quy (56/56)
 - [ ] Chủ repo test lại trên Telegram thật với v0.9.2 (bản `/a/` chưa có HTML thật để đối chiếu)
 
-### 23/11/2026 – Cuộn xa rồi tải bị lỗi (v0.9.3, đang làm)
+### 23/11/2026 – Cuộn xa rồi tải bị lỗi (v0.9.3)
 - Plan và tiến độ riêng: [docs/plan/2026-11-23/](docs/plan/2026-11-23/PLAN.md)
+- Chủ repo báo: cuộn chat lên xa rồi tải media hôm nay thì báo lỗi. Nguyên nhân: Telegram gỡ tin nhắn ở xa khỏi trang, scanner không tìm thấy nên báo lỗi ngay.
+- [x] Scanner tự cuộn chat về mục cần tải (cả WebK và WebA), huỷ được giữa chừng, mở mục gần trước, ô hiện "Đang tìm trong chat"
+- [x] Test 67/67 (Chromium của Playwright)
+- [ ] Chủ repo test lại trên Telegram thật với v0.9.3
