@@ -320,11 +320,22 @@
   const SEEK_TIMEOUT = 90000;
   const SEEK_STUCK_STEPS = 3;
   const chatChanged = () => Object.assign(new Error("The chat changed before this item was downloaded"), { translationKey: "errorChatChanged" });
-  const notInView = () => Object.assign(new Error("Item is no longer in the chat view"), { translationKey: "errorNotInView" });
+  const cancelledError = () => Object.assign(new Error("Cancelled"), { cancelled: true });
+  // Not found after searching: deleted if its id lies inside the loaded
+  // messages, otherwise the chat could not be scrolled far enough.
+  const seekFailed = (item) => {
+    const range = adapter.loadedRange();
+    const target = Number(item.mid);
+    const inside = range && Number.isFinite(target) && target >= range.min && target <= range.max;
+    return inside
+      ? Object.assign(new Error("Item is no longer in the chat (deleted?)"), { translationKey: "errorNotInView" })
+      : Object.assign(new Error("Item is no longer in the chat view and scrolling did not reach it"), { translationKey: "errorSeekTimeout" });
+  };
   const sameRange = (a, b) => (a && b ? a.min === b.min && a.max === b.max : a === b);
-  const bringIntoView = async (item, { shouldStop = () => false } = {}) => {
+  const bringIntoView = async (item, { shouldStop = () => false, onSeek = () => {} } = {}) => {
     let element = adapter.find(item.mid);
     if (element) return element;
+    onSeek();
     const target = Number(item.mid);
     const started = performance.now();
     let usedGoDown = false;
@@ -354,7 +365,7 @@
           }
         }
       }
-      element = await waitFor(() => adapter.find(item.mid) || (!sameRange(adapter.loadedRange(), range) && "moved"), SEEK_STEP_WAIT);
+      element = await waitFor(() => adapter.find(item.mid) || (shouldStop() && "moved") || (!sameRange(adapter.loadedRange(), range) && "moved"), SEEK_STEP_WAIT);
       if (element && element !== "moved") return element;
       if (element === "moved") {
         stuck = 0;
@@ -362,22 +373,24 @@
         break; // Telegram loads nothing more in this direction.
       }
     }
-    return adapter.find(item.mid);
+    return shouldStop() ? null : adapter.find(item.mid);
   };
 
   // Opens one item in Telegram's viewer and returns its full-size URL.
-  const resolveSource = async (item, { shouldStop } = {}) => {
+  // shouldStop() returns the error to stop with (cancelled, chat changed) or null.
+  const resolveSource = async (item, { shouldStop = () => null, onSeek } = {}) => {
     if (!await closeViewer()) {
       throw Object.assign(new Error("Telegram's media viewer did not close"), { translationKey: "errorNoSource" });
     }
-    const element = await bringIntoView(item, { shouldStop });
-    if (!element && shouldStop?.()) throw chatChanged();
-    if (!element) throw notInView();
+    const element = await bringIntoView(item, { shouldStop: () => Boolean(shouldStop()), onSeek });
+    if (shouldStop()) throw shouldStop();
+    if (!element) throw seekFailed(item);
     element.scrollIntoView({ block: "center" });
     (element.querySelector("img, canvas, video") || element).click();
     let lastSource = "";
     let stableSince = 0;
     const source = await waitFor(() => {
+      if (shouldStop()) return { stopped: true };
       const viewer = adapter.viewer();
       if (!viewer) return null;
       const { video, image } = adapter.viewerSource(viewer);
@@ -393,6 +406,7 @@
       return performance.now() - stableSince >= 400 ? { url, kind: video && getMediaSource(video) === url ? "video" : "image" } : null;
     }, 20000);
     await closeViewer();
+    if (source?.stopped) throw shouldStop() || cancelledError();
     if (!source) throw Object.assign(new Error("Telegram did not open this media"), { translationKey: "errorNoSource" });
     return source;
   };
@@ -400,6 +414,27 @@
   // Items are opened one at a time; their downloads then run through the shared queue.
   const resolveQueue = [];
   let resolving = false;
+  let current = null; // the entry being opened right now
+  const postState = (item, state) => postToExtension({ type: "task", task: { id: null, itemId: item.id, state, fileName: "", received: 0, total: null, error: "" } });
+  // Next item to open: one already in the page, else the one nearest to the
+  // loaded messages, so the chat scrolls one way instead of back and forth.
+  const takeNext = () => {
+    let best = 0;
+    let bestDistance = Infinity;
+    const range = adapter.loadedRange();
+    resolveQueue.forEach((entry, index) => {
+      const target = Number(entry.item.mid);
+      let distance;
+      if (adapter.find(entry.item.mid)) distance = -1;
+      else if (!range || !Number.isFinite(target)) distance = Number.MAX_SAFE_INTEGER;
+      else distance = target > range.max ? target - range.max : target < range.min ? range.min - target : 0;
+      if (distance < bestDistance) {
+        best = index;
+        bestDistance = distance;
+      }
+    });
+    return resolveQueue.splice(best, 1)[0];
+  };
   const reportFailure = (item, error) => {
     logger.error(error.message);
     postToExtension({
@@ -413,18 +448,25 @@
     resolving = true;
     try {
       while (resolveQueue.length) {
-        const { item, chat, folder } = resolveQueue.shift();
+        const entry = takeNext();
+        const { item, chat, folder } = entry;
         if (chat !== chatKey()) {
           // The chat was closed or switched; its messages are no longer on the page.
           reportFailure(item, chatChanged());
           continue;
         }
-        postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "preparing", fileName: "", received: 0, total: null, error: "" } });
+        current = entry;
+        postState(item, "preparing");
+        const shouldStop = () => (entry.cancelled ? cancelledError() : chat !== chatKey() ? chatChanged() : null);
         try {
-          const { url, kind } = await resolveSource(item, { shouldStop: () => chat !== chatKey() });
+          const { url, kind } = await resolveSource(item, { shouldStop, onSeek: () => postState(item, "seeking") });
+          if (entry.cancelled) throw cancelledError();
           downloadMedia(url, kind, { batch: true, itemId: item.id, folder });
         } catch (error) {
-          reportFailure(item, error);
+          if (error.cancelled) postState(item, "cancelled");
+          else reportFailure(item, error);
+        } finally {
+          current = null;
         }
       }
     } finally {
@@ -439,7 +481,7 @@
     let accepted = 0;
     for (const id of Array.isArray(ids) ? ids : []) {
       const item = items.get(id);
-      if (!item || resolveQueue.some((entry) => entry.item === item)) continue;
+      if (!item || current?.item === item || resolveQueue.some((entry) => entry.item === item)) continue;
       resolveQueue.push({ item, chat, folder });
       accepted++;
     }
@@ -455,16 +497,20 @@
 
   onExtensionMessage("scan:get", snapshot);
   onExtensionMessage("scan:download", ({ ids }) => download(ids));
-  onExtensionMessage("scan:cancel", () => {
+  // Stops the item being opened (even mid-scroll) and drops the waiting ones.
+  const cancelPending = () => {
     const dropped = resolveQueue.splice(0);
-    for (const { item } of dropped) {
-      postToExtension({ type: "task", task: { id: null, itemId: item.id, state: "cancelled", fileName: "", received: 0, total: null, error: "" } });
+    for (const { item } of dropped) postState(item, "cancelled");
+    if (current && !current.cancelled) {
+      current.cancelled = true;
+      dropped.push(current);
     }
-    return { cancelled: dropped.length };
-  });
+    return dropped.length;
+  };
+  onExtensionMessage("scan:cancel", () => ({ cancelled: cancelPending() }));
   onExtensionMessage("scan:clear", () => {
     itemsFor(chatKey()).clear();
-    resolveQueue.length = 0;
+    cancelPending();
     // Forget observed elements so media still on screen is listed again.
     if (visibility) {
       visibility.disconnect();
@@ -481,5 +527,5 @@
     loadedRange: adapter.loadedRange(),
   };
 
-  globalThis.TelScanner = { snapshot, download, scan, chatWindow };
+  globalThis.TelScanner = { snapshot, download, cancel: cancelPending, scan, chatWindow };
 })();

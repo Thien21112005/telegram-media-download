@@ -213,6 +213,10 @@
       overlay.innerHTML = `<span class="ring">${icon("alert")}</span>`;
     } else if (task.state === "cancelled") {
       overlay.innerHTML = `<span class="ring">${icon("stop")}</span>`;
+    } else if (task.state === "seeking") {
+      // Scrolling the chat back to a far-away item can take a while: say so on the tile.
+      overlay.innerHTML = `<span class="label"></span><span class="meter"><i></i></span>`;
+      overlay.firstChild.textContent = t("seeking");
     } else {
       // Queued or preparing: an empty meter; the state word lives in the aria-label.
       overlay.innerHTML = `<span class="meter"><i></i></span>`;
@@ -361,7 +365,8 @@
     $("bar-progress").parentElement.hidden = !running;
     $("bar-progress").style.width = running ? `${(done / batch.length) * 100}%` : "0";
     $("bar-note").hidden = !running;
-    $("bar-note").textContent = t("batchNote");
+    const seeking = batch.some((id) => state.tasks.get(id)?.state === "seeking");
+    $("bar-note").textContent = t(seeking ? "seekingNote" : "batchNote");
   };
 
   // ---- Selection and actions ----

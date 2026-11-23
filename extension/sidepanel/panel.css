@@ -163,6 +163,9 @@ svg { width: 20px; height: 20px; flex-shrink: 0; }
 .tile[data-state="queued"] .state, .tile[data-state="preparing"] .state { background: rgb(0 0 0 / 0.35); }
 /* Preparing (Telegram is opening the item): a short static fill, no looping motion. */
 .tile[data-state="preparing"] .meter i { width: 12%; }
+/* Seeking (the chat is scrolling back to the item): a word instead of a number, same static fill. */
+.tile[data-state="seeking"] .label { padding: 0 6px; text-align: center; font-size: 11px; line-height: 1.25; color: #fff; }
+.tile[data-state="seeking"] .meter i { width: 12%; }
 
 /* The reader's place in the chat */
 .here {
