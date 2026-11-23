@@ -75,3 +75,10 @@ Kế hoạch: [PLAN.md](PLAN.md)
 - [x] Mỗi lần trang thay đổi, mọi mục chưa có ảnh rõ mà còn trong trang đều được chụp lại, kể cả mục đã khuất màn hình. Có "chữ ký" nguồn ảnh (src, kích thước, đã tải xong chưa) để không vẽ lại khi không có gì đổi
 - [x] Test hồi quy: ghi nhận ảnh mờ → cuộn khuất → Telegram đổi sang ảnh rõ → ô có ảnh rõ. Code cũ fail (kẹt ảnh mờ), code mới pass. Toàn bộ 69/69
 - [ ] Chủ repo kiểm tra lại trên Telegram thật. Nếu ô vẫn trống: chụp màn hình panel kèm HTML của một bubble có ô trống
+
+### 23/11/2026 – Lỗi phụ: "Uncaught Error: Extension context invalidated" trong trang Lỗi
+- Chủ repo thấy lỗi ở `content/bridge.js:16` trong `chrome://extensions` → Lỗi.
+- Nguyên nhân: sau khi tải lại/cập nhật extension, `bridge.js` cũ vẫn chạy trong tab Telegram mở từ trước. Mọi lệnh `chrome.*` khi đó **ném lỗi ngay** (không trả về promise bị reject), nên `.catch()` không bắt được và lỗi bị ghi vào trang Lỗi. Vô hại, tải lại tab Telegram là hết.
+- [x] Bridge kiểm tra extension còn sống trước mỗi tin nhắn và bọc `sendMessage` trong `try/catch`. Khi extension đã bị ngắt, bridge tự nghỉ: gỡ dấu `data-tel-dl-bridge`, bỏ listener, ghi một dòng `console.info` nhắc tải lại tab. Script trong trang chạy tiếp như không có extension (nút tải trong trình xem vẫn dùng được)
+- [x] Test `tests/bridge.test.cjs` với `chrome` giả: code cũ fail đúng lỗi `Uncaught Error: Extension context invalidated.`, code mới pass. Toàn bộ 70/70
+- Ghi nhận: chạy cả bộ test trên máy này đôi khi 3 test ngôn ngữ chập chờn (chạy riêng thì 13/13, chạy lại cả bộ thì 70/70)

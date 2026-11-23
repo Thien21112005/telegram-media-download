@@ -11,6 +11,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Cancel now also stops the item being opened, not only the ones still waiting.
 - Side panel previews looked pixelated, especially screenshots with text. Previews were at most 160 pixels on their longer side, so a wide image was stretched to fill the square tile. They are now the 256-pixel centre square, scaled down at high quality.
 - In long chats, more and more side panel tiles stayed blurry or empty. Previews were only redrawn while the item was on screen, but Telegram often swaps in the sharp image after you have scrolled past. Every item still waiting for a sharp preview is now redrawn when its image changes, on screen or not.
+- After the extension was reloaded or updated, Telegram tabs opened before it filled the extension's error page with "Extension context invalidated". The old content script now stops quietly and the tab keeps working until it is reloaded.
 
 ### Changed
 - Items already in the page are downloaded first, then the nearest far-away ones, so the chat scrolls in one direction.

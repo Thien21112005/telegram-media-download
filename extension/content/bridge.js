@@ -12,8 +12,34 @@
     document.dispatchEvent(new CustomEvent("tel-dl:to-page", { detail: JSON.stringify(message) }));
   const readSettings = async () =>
     TelSettings.normalize(await chrome.storage.sync.get(TelSettings.DEFAULTS), TelI18n.UI_LANGUAGES);
+  // After the extension is reloaded or updated, this script keeps running in
+  // tabs opened before, but every chrome.* call throws "Extension context
+  // invalidated". The bridge then retires: the page scripts see no bridge and
+  // carry on alone (local settings, no side panel) until the tab is reloaded.
+  const alive = () => {
+    try {
+      return Boolean(chrome.runtime?.id);
+    } catch {
+      return false;
+    }
+  };
+  let retired = false;
+  const retire = () => {
+    if (retired) return;
+    retired = true;
+    document.documentElement.removeAttribute("data-tel-dl-bridge");
+    document.removeEventListener("tel-dl:to-extension", onPageMessage);
+    console.info("[Tel Download] The extension was reloaded or updated. Reload this tab to reconnect.");
+  };
   // The side panel may be closed; a missing receiver is not an error.
-  const toExtension = (message) => chrome.runtime.sendMessage(message).catch(() => null);
+  const toExtension = (message) => {
+    try {
+      return chrome.runtime.sendMessage(message).catch(() => null);
+    } catch {
+      retire();
+      return Promise.resolve(null);
+    }
+  };
 
   // Requests the extension sends to the page, waiting for the page's reply.
   const pageReplies = new Map();
@@ -46,7 +72,7 @@
     media: ({ chat, items, reset }) => toExtension({ type: "media", chat, items, reset: Boolean(reset) }),
     view: ({ chat, ids }) => toExtension({ type: "view", chat, ids }),
   };
-  document.addEventListener("tel-dl:to-extension", (event) => {
+  function onPageMessage(event) {
     let message;
     try {
       message = JSON.parse(event.detail);
@@ -59,14 +85,20 @@
     }
     const handler = fromPage[message?.type];
     if (!handler) return;
-    Promise.resolve(handler(message)).then(
+    if (!alive()) {
+      retire();
+      if (message.requestId) toPage({ type: "reply", requestId: message.requestId, value: null });
+      return;
+    }
+    Promise.resolve().then(() => handler(message)).then(
       (value) => message.requestId && toPage({ type: "reply", requestId: message.requestId, value: value ?? null }),
       (error) => {
         console.error("[Tel Download]", error);
         if (message.requestId) toPage({ type: "reply", requestId: message.requestId, value: null });
       }
     );
-  });
+  }
+  document.addEventListener("tel-dl:to-extension", onPageMessage);
 
   // Messages from the side panel to this tab, forwarded to the page.
   const TO_PAGE = new Set(["scan:get", "scan:download", "scan:cancel", "scan:clear", "task:cancel"]);
