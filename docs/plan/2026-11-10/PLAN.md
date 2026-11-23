@@ -2,7 +2,7 @@
 
 > Fork từ [Neet-Nestor/Telegram-Media-Downloader](https://github.com/Neet-Nestor/Telegram-Media-Downloader) (tác giả gốc: **Nestor Qin**, giấy phép **GNU GPLv3**).
 > Repo mới: https://github.com/Thien21112005/telegram-media-download
-> Theo dõi tiến độ hằng ngày: [PROGRESS.md](../PROGRESS.md)
+> Theo dõi tiến độ hằng ngày: [PROGRESS.md](../../../PROGRESS.md)
 
 ## 1. Mục tiêu
 
@@ -34,7 +34,7 @@ telegram-media-download/
 │  └─ icons/
 ├─ tests/                      # Playwright: nạp extension thật vào Chromium
 ├─ scripts/pack.mjs            # nén extension/ thành dist/*.zip
-├─ docs/                       # PLAN.md, RESEARCH.md, ARCHITECTURE.md, CONTRIBUTING.md
+├─ docs/                       # plan/<ngày>/PLAN.md, RESEARCH.md, ARCHITECTURE.md, CONTRIBUTING.md
 ├─ .github/workflows/          # test.yml + release.yml (tag v* thì tự đính kèm .zip vào Release)
 ├─ README.md / README.vi.md
 ├─ PROGRESS.md

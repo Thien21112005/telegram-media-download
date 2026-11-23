@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Chrome extension, Manifest V3, plain HTML/CSS/JavaScript with no framework or bundler (decided in docs/PLAN.md). Content scripts run in Telegram Web pages; the side panel and options page are extension pages.
+Chrome extension, Manifest V3, plain HTML/CSS/JavaScript with no framework or bundler (decided in docs/plan/2026-11-10/PLAN.md). Content scripts run in Telegram Web pages; the side panel and options page are extension pages.
 
 ## Users
 

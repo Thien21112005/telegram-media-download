@@ -1,7 +1,7 @@
 | 9 | 19/11/2026 | Test thực tế, phát hành v1.0.0 | 🟨 đã phát hành v0.9.0 (beta); v1.0.0 chờ test thật || 8 | 18/11/2026 | README, tài liệu, CI release | ✅ || 7 | 17/11/2026 | Kiểm định giao diện (impeccable) | ✅ reviewer: ship || 6 | 16/11/2026 | Tải hàng loạt + Options | ✅ (làm sớm, 10/11) || 5 | 15/11/2026 | Thiết kế + dựng Side Panel | ✅ (làm sớm, 10/11) || 4 | 14/11/2026 | Quét media trong chat | ✅ (làm sớm, 10/11) || 1 | 11/11/2026 | Nghiên cứu Telegram thật (R1–R4) | 🟨 R2, R3 xong; R1, R4 chờ chủ repo thử trên Telegram thật |# Progress
 
 Tiến độ chuyển Telegram Media Downloader từ userscript sang Chrome Extension.
-Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
+Kế hoạch chi tiết: [docs/plan/2026-11-10/PLAN.md](docs/plan/2026-11-10/PLAN.md)
 
 **Trạng thái:** ⬜ chưa làm · 🟨 đang làm · ✅ xong · ⛔ bị chặn
 
@@ -115,3 +115,6 @@ Kế hoạch chi tiết: [docs/PLAN.md](docs/PLAN.md)
 - [x] Side panel đổi ảnh của ô khi nhận ảnh mới
 - [x] Fixture có ảnh giữ chỗ rồi mới đổi sang ảnh rõ; 2 test hồi quy (56/56)
 - [ ] Chủ repo test lại trên Telegram thật với v0.9.2 (bản `/a/` chưa có HTML thật để đối chiếu)
+
+### 23/11/2026 – Cuộn xa rồi tải bị lỗi (v0.9.3, đang làm)
+- Plan và tiến độ riêng: [docs/plan/2026-11-23/](docs/plan/2026-11-23/PLAN.md)
