@@ -146,7 +146,11 @@
   // Telegram first shows a tiny blurred placeholder and swaps in the real
   // preview once it has loaded. A preview drawn from the placeholder is
   // provisional (final: false) and is replaced when a sharp source appears.
-  const THUMB_SIZE = 160;
+  // Side panel tiles are squares about 120 CSS pixels wide that crop with
+  // "cover", so the preview is the centre square at twice that size: sharp on
+  // high-density screens, and no pixels are spent on the cropped-off parts.
+  const THUMB_SIZE = 256;
+  const THUMB_QUALITY = 0.85;
   const SHARP_MIN_SIZE = 64; // placeholders are about 40px on their longer side
   const sourceSize = (source) => ({
     width: source.naturalWidth || source.videoWidth || source.width || 0,
@@ -171,12 +175,15 @@
     const source = sources.sort((a, b) => isSharp(b) - isSharp(a) || area(b) - area(a))[0];
     const { width, height } = sourceSize(source);
     try {
-      const scale = Math.min(1, THUMB_SIZE / Math.max(width, height));
+      const side = Math.min(width, height);
+      const size = Math.max(1, Math.min(THUMB_SIZE, Math.round(side)));
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(width * scale));
-      canvas.height = Math.max(1, Math.round(height * scale));
-      canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
-      return { url: canvas.toDataURL("image/jpeg", 0.7), final: isSharp(source) };
+      canvas.width = canvas.height = size;
+      const context = canvas.getContext("2d");
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(source, (width - side) / 2, (height - side) / 2, side, side, 0, 0, size, size);
+      return { url: canvas.toDataURL("image/jpeg", THUMB_QUALITY), final: isSharp(source) };
     } catch {
       return null; // Cross-origin or not yet decoded.
     }

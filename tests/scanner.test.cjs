@@ -310,3 +310,37 @@ test('items already in the page are opened first, then the nearest far-away ones
   assert.deepEqual(order.slice(0, firstToday).sort(), old.map(id => Number(id.split(':')[1])).sort(), 'old items first');
   assert.equal(order.length, total);
 });
+
+// Regression: previews were at most 160px on their longer side, so a wide
+// screenshot was 160x90 and the square "cover" tile blew it up into a blur.
+test('previews are the sharp centre square of the photo, large enough for dense screens', async () => {
+  const html = `<div class="bubbles"><section class="bubbles-date-group"><div class="bubble service is-date"><div class="service-msg">Today</div></div>
+    <div class="bubble" data-mid="70"><div class="attachment" style="width:320px;height:180px"></div></div></section></div>
+    <script>
+      // 1280x720: red left and right thirds, blue centre.
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280; canvas.height = 720;
+      const context = canvas.getContext('2d');
+      context.fillStyle = 'rgb(220, 30, 30)'; context.fillRect(0, 0, 1280, 720);
+      context.fillStyle = 'rgb(30, 60, 220)'; context.fillRect(280, 0, 720, 720);
+      const image = document.createElement('img');
+      image.className = 'media-photo';
+      image.style.cssText = 'width:320px;height:180px;display:block';
+      image.src = canvas.toDataURL('image/png');
+      document.querySelector('.attachment').appendChild(image);
+    </script>`;
+  page = await openPage(browser, html, '/k/');
+  await page.waitForFunction(() => TelScanner.snapshot().items[0]?.thumbFinal === true);
+  const preview = await page.evaluate(async () => {
+    const image = new Image();
+    image.src = TelScanner.snapshot().items[0].thumb;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const blue = (x) => { const [r, , b] = context.getImageData(x, image.height / 2, 1, 1).data; return b > r; };
+    return { width: image.width, height: image.height, edges: [blue(2), blue(image.width - 3)] };
+  });
+  assert.deepEqual(preview, { width: 256, height: 256, edges: [true, true] }, 'square, cropped to the centre');
+});

@@ -59,3 +59,11 @@ Kế hoạch: [PLAN.md](PLAN.md)
   - [ ] Bấm **Huỷ** khi chat đang tự cuộn → dừng ngay, ô hiện đã huỷ
   - [ ] `/a/`: lặp lại hai bước đầu
   - [ ] Nếu chat không tự cuộn hoặc báo "Không cuộn tới được mục này": mở DevTools ở tab Telegram, copy HTML của khung chat (phần chứa các bubble) và nút mũi tên "xuống cuối" để chỉnh selector `scroller` / `goDownButton` trong `content/scanner.js`
+
+### 23/11/2026 – Lỗi phụ: ảnh thu nhỏ trên side panel bị vỡ
+- Chủ repo gửi ảnh chụp: thumbnail của ảnh chụp màn hình (nhiều chữ) bị vỡ hạt, nhoè.
+- Nguyên nhân: thumbnail giới hạn cạnh **dài** 160 px, JPEG 0.7. Ô trên panel là hình vuông ~110–120 px dùng `cover`, nên ảnh ngang 160×90 bị phóng cạnh ngắn 90 px lên lấp đầy ô, rồi nhân thêm tỉ lệ điểm ảnh của màn hình (1.5–2x) → vỡ.
+- [x] Thumbnail giờ là **hình vuông 256×256 cắt giữa ảnh** (đúng phần ô hiển thị), thu nhỏ chất lượng cao (`imageSmoothingQuality = "high"`), JPEG 0.85. Dung lượng mỗi ảnh vẫn nhỏ vì không tốn điểm ảnh cho phần bị cắt
+- [x] Test hồi quy: ảnh 1280×720 → thumbnail 256×256 lấy đúng phần giữa. Code cũ ra 160×90 (fail), code mới pass. Toàn bộ 68/68
+- [ ] Chủ repo xem lại trên Telegram thật
+- Ghi nhận, chưa sửa: vài ô trong ảnh chụp vẫn **mờ hẳn** (không phải vỡ hạt), có thể là ảnh giữ chỗ mờ mà Telegram chưa thay bằng ảnh rõ (xem bản sửa v0.9.2). Nếu sau bản này vẫn còn, cần HTML thật của một bubble như vậy

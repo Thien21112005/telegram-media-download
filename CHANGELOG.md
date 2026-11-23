@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+- Side panel previews looked pixelated, especially screenshots with text. Previews were at most 160 pixels on their longer side, so a wide image was stretched to fill the square tile. They are now the 256-pixel centre square, scaled down at high quality.
+
 ## [0.9.3] - 2026-11-23
 
 ### Fixed
