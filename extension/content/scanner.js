@@ -26,6 +26,28 @@
     document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", keyCode: 27, bubbles: true }));
   };
 
+  // Telegram keeps only the messages around the reader's place in the page.
+  // These helpers describe that window so far-away items can be scrolled back.
+  const isScrollable = (element) => {
+    const { overflowY } = getComputedStyle(element);
+    return /(auto|scroll|overlay)/.test(overflowY) && element.scrollHeight > element.clientHeight;
+  };
+  // The adapter's own scroller, else the nearest scrollable ancestor of a message.
+  const findScroller = (preferred, message) => {
+    const known = document.querySelector(preferred);
+    if (known && isScrollable(known)) return known;
+    for (let node = message?.parentElement; node && node !== document.body; node = node.parentElement) {
+      if (isScrollable(node)) return node;
+    }
+    return document.scrollingElement;
+  };
+  // The smallest and largest message ids in the page, or null when none are.
+  const rangeOf = (ids) => {
+    const numbers = ids.map(Number).filter(Number.isFinite);
+    return numbers.length ? { min: Math.min(...numbers), max: Math.max(...numbers) } : null;
+  };
+  const isShown = (element) => Boolean(element && element.getClientRects().length && !element.closest(".hide, [hidden]"));
+
   // Each adapter knows one Telegram web version's markup.
   const webK = {
     mediaSelector: ".bubble[data-mid] .attachment .album-item[data-mid], .bubble[data-mid] .attachment",
@@ -61,6 +83,12 @@
       const buttons = Array.from(bar.querySelectorAll("button.btn-icon:not(.hide):not(.btn-menu-toggle)"));
       return bar.querySelector('button[aria-label="Close"], button.tgico-close') || buttons[buttons.length - 1] || null;
     },
+    scroller: () => findScroller("#column-center .bubbles > .scrollable-y, .bubbles > .scrollable-y", document.querySelector(".bubble[data-mid]")),
+    goDownButton: () => {
+      const button = document.querySelector("#column-center .bubbles-go-down, .bubbles-go-down");
+      return isShown(button) ? button : null;
+    },
+    loadedRange: () => rangeOf(Array.from(document.querySelectorAll(".bubble[data-mid]:not(.is-date)"), (bubble) => bubble.dataset.mid)),
   };
 
   const webA = {
@@ -92,6 +120,14 @@
     },
     closeButton: (viewer) =>
       viewer.querySelector('button[aria-label="Close"], .MediaViewerActions button:last-child'),
+    scroller: () => findScroller(".MiddleColumn .MessageList, .MessageList", document.querySelector(".message-list-item")),
+    goDownButton: () => {
+      // The button stays in the page while hidden; its container is "revealed" when shown.
+      const button = document.querySelector(".ScrollDownButton button") || document.querySelector(".ScrollDownButton");
+      return isShown(button) && !button.closest(".FloatingActionButtons:not(.revealed)") ? button : null;
+    },
+    loadedRange: () => rangeOf(Array.from(document.querySelectorAll(".message-list-item"),
+      (message) => message.dataset.messageId || message.id.replace(/^message-/, ""))),
   };
 
   const isWebK = location.hostname === "webk.telegram.org" || location.pathname.startsWith("/k/");
@@ -382,5 +418,12 @@
     return snapshot();
   });
 
-  globalThis.TelScanner = { snapshot, download, scan };
+  // Read-only view of the chat window, used by the scroll-back logic and tests.
+  const chatWindow = () => adapter && {
+    scroller: adapter.scroller(),
+    goDownButton: adapter.goDownButton(),
+    loadedRange: adapter.loadedRange(),
+  };
+
+  globalThis.TelScanner = { snapshot, download, scan, chatWindow };
 })();

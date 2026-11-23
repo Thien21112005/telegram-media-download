@@ -134,3 +134,57 @@ test('a provisional preview is replaced once Telegram shows the sharp image', as
   await page.waitForFunction(() => TelScanner.snapshot().items[0].thumbFinal === true);
   assert.deepEqual(await colour(), { red: false, final: true, kind: 'video' });
 });
+
+// Plan 2026-11-23, step 1: the scanner can describe Telegram's message window.
+test('WebK chat window: scroll container, go-down button and loaded message range', async () => {
+  page = await openPage(browser, webK, '/k/');
+  await waitForItems(3);
+  // Without Telegram's own scroller the page itself scrolls.
+  let view = await page.evaluate(() => {
+    const { scroller, goDownButton, loadedRange } = TelScanner.chatWindow();
+    return { page: scroller === document.scrollingElement, goDown: goDownButton, loadedRange };
+  });
+  assert.deepEqual(view, { page: true, goDown: null, loadedRange: { min: 10, max: 20 } });
+
+  // Live markup: messages sit in .bubbles > .scrollable-y, next to a go-down button.
+  view = await page.evaluate(() => {
+    const bubbles = document.querySelector('.bubbles');
+    const scrollable = document.createElement('div');
+    scrollable.className = 'scrollable scrollable-y';
+    scrollable.style.cssText = 'height:300px;overflow-y:auto';
+    scrollable.append(...bubbles.childNodes);
+    const goDown = document.createElement('button');
+    goDown.className = 'btn-circle btn-corner bubbles-go-down';
+    bubbles.append(scrollable, goDown);
+    const { scroller, goDownButton } = TelScanner.chatWindow();
+    const shown = goDownButton === goDown;
+    goDown.classList.add('hide');
+    return { scroller: scroller === scrollable, shown, hidden: TelScanner.chatWindow().goDownButton };
+  });
+  assert.deepEqual(view, { scroller: true, shown: true, hidden: null });
+});
+
+test('WebA chat window: scroll container, go-down button and loaded message range', async () => {
+  page = await openPage(browser, webA, '/a/');
+  await waitForItems(2);
+  const view = await page.evaluate(() => {
+    const list = document.createElement('div');
+    list.className = 'MessageList custom-scroll';
+    list.style.cssText = 'height:100px;overflow-y:auto';
+    list.append(...document.querySelectorAll('.message-list-item'));
+    const floating = document.createElement('div');
+    floating.className = 'FloatingActionButtons';
+    floating.innerHTML = '<div class="ScrollDownButton"><button aria-label="Go to bottom"></button></div>';
+    document.body.append(list, floating);
+    const before = TelScanner.chatWindow();
+    floating.classList.add('revealed');
+    const after = TelScanner.chatWindow();
+    return {
+      scroller: before.scroller === list,
+      hiddenButton: before.goDownButton,
+      shownButton: after.goDownButton === floating.querySelector('button'),
+      loadedRange: after.loadedRange,
+    };
+  });
+  assert.deepEqual(view, { scroller: true, hiddenButton: null, shownButton: true, loadedRange: { min: 30, max: 31 } });
+});
