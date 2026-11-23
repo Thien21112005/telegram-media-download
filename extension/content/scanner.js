@@ -221,8 +221,15 @@
   // Draws the preview again while it is missing or provisional. Returns true
   // if the item was announced with a new preview.
   const watchedImages = new WeakSet();
+  // What a preview was drawn from, so unchanged media is not redrawn.
+  const drawnFrom = new Map(); // item id -> source signature
+  const signature = (element) => Array.from(element.querySelectorAll("img, canvas, video"),
+    (source) => `${source.tagName}:${source.currentSrc || source.src || ""}:${sourceSize(source).width}x${sourceSize(source).height}:${isDrawable(source)}`).join("|");
   const refreshThumbnail = (element, item) => {
     if (item.thumbFinal) return false;
+    const sig = signature(element);
+    if (drawnFrom.get(item.id) === sig) return false;
+    drawnFrom.set(item.id, sig);
     const shot = makeThumbnail(element);
     let changed = false;
     if (shot && shot.url !== item.thumb) {
@@ -241,12 +248,12 @@
     }
     return changed;
   };
-  // Telegram swaps placeholders for real previews after a bubble is on screen.
-  const refreshOnScreenThumbnails = () => {
-    const items = itemsFor(chatKey());
-    for (const id of onScreen) {
-      const item = items.get(id);
-      if (!item || item.thumbFinal) continue;
+  // Telegram swaps placeholders for real previews later, often after the reader
+  // has scrolled past. Every item still waiting for a sharp preview is redrawn
+  // whenever its media changes, on screen or not, while it is in the page.
+  const refreshPendingThumbnails = () => {
+    for (const item of itemsFor(chatKey()).values()) {
+      if (item.thumbFinal) continue;
       const element = adapter.find(item.mid);
       if (element) refreshThumbnail(element, item);
     }
@@ -283,7 +290,7 @@
       observed.add(element);
       visibility.observe(element);
     }
-    refreshOnScreenThumbnails();
+    refreshPendingThumbnails();
   };
   let scanTimer;
   const scheduleScan = () => {
@@ -516,6 +523,7 @@
   };
   onExtensionMessage("scan:cancel", () => ({ cancelled: cancelPending() }));
   onExtensionMessage("scan:clear", () => {
+    for (const id of itemsFor(chatKey()).keys()) drawnFrom.delete(id);
     itemsFor(chatKey()).clear();
     cancelPending();
     // Forget observed elements so media still on screen is listed again.

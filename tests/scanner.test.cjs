@@ -344,3 +344,20 @@ test('previews are the sharp centre square of the photo, large enough for dense 
   });
   assert.deepEqual(preview, { width: 256, height: 256, edges: [true, true] }, 'square, cropped to the centre');
 });
+
+// Regression: previews were only redrawn while the item was on screen. Telegram
+// often swaps in the sharp image after the reader has scrolled past, so in long
+// chats more and more tiles stayed blurry or empty.
+test('a preview sharpens even when Telegram swaps the image after the item scrolled away', async () => {
+  const { webKLazy } = require('./fixtures.cjs');
+  page = await openPage(browser, webKLazy, '/k/');
+  await waitForItems(1);
+  assert.equal((await snapshot()).items[0].thumbFinal, false);
+  await page.evaluate(() => {
+    document.querySelector('.bubbles').insertAdjacentHTML('beforeend', '<div style="height:4000px"></div>');
+    scrollTo(0, document.body.scrollHeight);
+  });
+  await page.waitForFunction(() => TelScanner.snapshot().view.length === 0);
+  await page.evaluate(() => sharpen());
+  await page.waitForFunction(() => TelScanner.snapshot().items[0].thumbFinal === true, null, { timeout: 5000 });
+});

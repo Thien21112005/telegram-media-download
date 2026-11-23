@@ -67,3 +67,11 @@ Kế hoạch: [PLAN.md](PLAN.md)
 - [x] Test hồi quy: ảnh 1280×720 → thumbnail 256×256 lấy đúng phần giữa. Code cũ ra 160×90 (fail), code mới pass. Toàn bộ 68/68
 - [ ] Chủ repo xem lại trên Telegram thật
 - Ghi nhận, chưa sửa: vài ô trong ảnh chụp vẫn **mờ hẳn** (không phải vỡ hạt), có thể là ảnh giữ chỗ mờ mà Telegram chưa thay bằng ảnh rõ (xem bản sửa v0.9.2). Nếu sau bản này vẫn còn, cần HTML thật của một bubble như vậy
+
+### 23/11/2026 – Lỗi phụ: cuộn chat xa thì ô trên panel hết hiện ảnh
+- Chủ repo báo (bản cũ): số đếm All/Photos/Videos vẫn tăng nhưng ở khoảng 100–130 mục trở đi, danh sách bên dưới như "hết load".
+- Dựng lại với chat giả 300 ảnh: số đếm luôn bằng số ô (cùng một nguồn dữ liệu), nên ô không bị thiếu. Thứ bị kẹt là **ảnh trong ô**.
+- Nguyên nhân: ảnh thu nhỏ chỉ được chụp lại khi mục **đang ở trên màn hình**, và chỉ theo dõi những thẻ `img` có sẵn lúc ghi nhận. Telegram hay chèn ảnh rõ (thẻ `img` mới) sau khi người dùng đã cuộn qua, nên cuộn càng nhanh, càng xa thì càng nhiều ô kẹt ở ảnh mờ hoặc trống. Đây cũng có thể là lý do của các ô mờ trong ảnh chụp trước.
+- [x] Mỗi lần trang thay đổi, mọi mục chưa có ảnh rõ mà còn trong trang đều được chụp lại, kể cả mục đã khuất màn hình. Có "chữ ký" nguồn ảnh (src, kích thước, đã tải xong chưa) để không vẽ lại khi không có gì đổi
+- [x] Test hồi quy: ghi nhận ảnh mờ → cuộn khuất → Telegram đổi sang ảnh rõ → ô có ảnh rõ. Code cũ fail (kẹt ảnh mờ), code mới pass. Toàn bộ 69/69
+- [ ] Chủ repo kiểm tra lại trên Telegram thật. Nếu ô vẫn trống: chụp màn hình panel kèm HTML của một bubble có ô trống

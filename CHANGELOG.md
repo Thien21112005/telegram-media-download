@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 - Side panel previews looked pixelated, especially screenshots with text. Previews were at most 160 pixels on their longer side, so a wide image was stretched to fill the square tile. They are now the 256-pixel centre square, scaled down at high quality.
+- In long chats, more and more side panel tiles stayed blurry or empty. Previews were only redrawn while the item was on screen, but Telegram often swaps in the sharp image after you have scrolled past. Every item still waiting for a sharp preview is now redrawn when its image changes, on screen or not.
 
 ## [0.9.3] - 2026-11-23
 
